@@ -82,7 +82,6 @@ if (add) {
   const status = exec('git diff --cached --name-only | wc -l', {
     silent: true,
   }).stdout.trim();
-
   if (status === '0') {
     console.log(yellow('Nada para commitar!'));
     process.exit(0);
