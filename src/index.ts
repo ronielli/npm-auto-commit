@@ -1,3 +1,5 @@
+import { createInterface } from 'readline';
+
 import { exec } from 'shelljs';
 import { inc } from 'semver';
 
@@ -5,17 +7,28 @@ import Message from './utils/message.util';
 import handleType from './utils/handleType.utils';
 import { green, red, yellow } from './utils/colors.util';
 
-if (!exec('git --version').stdout) {
+if (
+  !exec('git --version', {
+    silent: true,
+  }).stdout
+) {
   console.log(red('Git não está instalado!'));
   process.exit(1);
 }
+const user = exec('git config --global user.email', {
+  silent: true,
+}).stdout.trim();
 
-if (!exec('git config --global user.name').stdout) {
+if (!user) {
   console.log(red('Git não está configurado!'));
   process.exit(1);
 }
 
-if (!exec('git rev-parse --is-inside-work-tree').stdout) {
+if (
+  !exec('git rev-parse --is-inside-work-tree', {
+    silent: true,
+  }).stdout
+) {
   console.log(red('Não foi iniciado um repositório git!'));
   process.exit(1);
 }
@@ -51,8 +64,7 @@ const add = args.some(
 const bigger = args.some((arg) => arg.startsWith('-') && arg.includes('b'));
 
 if (add) {
-  console.log(green('git add .:'));
-  // exec('git add .');
+  exec(`git add .`);
 } else {
   const status = exec('git status --porcelain').stdout;
   if (!status) {
@@ -63,10 +75,41 @@ if (add) {
 
 const message = new Message(description);
 
-const currentVersion = exec('git describe --abbrev=0 --tags').stdout;
+// git pull
+exec('git pull', { silent: true });
 
-console.log('Versão atual:', version);
+console.log('-------+++++++++++++++-------');
 
+const currentVersion =
+  exec('git describe --abbrev=0 --tags', { silent: true }).stdout.trim() ||
+  '0.0.0';
+const versionType = bigger ? 'major' : handleType(message.getType());
+const newVersion = inc(
+  currentVersion,
+  versionType as 'major' | 'minor' | 'patch',
+);
+// mostrar o que vai ser commitado
+console.log(green('Mensagem:'), message.toString());
+console.log(green('Versão atual:'), currentVersion);
+console.log(green('Nova versão:'), newVersion);
+const rl = createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.question('Deseja continuar? (s/n)', (answer) => {
+  if (answer.toLowerCase() === 's') {
+    exec(`git commit -m "${message.toString()}"`);
+    exec(`git tag ${newVersion}`);
+    exec(`git push`);
+    console.log(green('Commit realizado com sucesso!'));
+  } else {
+    console.log(yellow('Commit cancelado!'));
+  }
+  rl.close();
+});
+// const rl = createInterface({
+//   input: process.stdin,
 // Tipo: Indica o propósito geral do commit. Alguns tipos comuns incluem:
 
 // feat: para introduzir uma nova funcionalidade.
@@ -78,8 +121,6 @@ console.log('Versão atual:', version);
 // Âmbito (opcional): Indica o escopo da mudança realizada no commit. Pode ser uma determinada parte do código, um módulo específico ou qualquer outra coisa relevante.
 // feat fix docs refactor test chore
 // Mensagem: Uma descrição breve e clara do que foi feito no commit. Deve começar com letra minúscula e ser escrita no tempo presente, usando uma linguagem concisa e descritiva.
-
-const versionType = bigger ? 'major' : handleType(message.getType());
 
 // exec(`git commit -m "${message.toString()}"`);
 
