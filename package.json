@@ -1,10 +1,10 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/utils/cli.js",
   "bin": {
-    "npm-auto-commit": "dist/index.js"
+    "npm-auto-commit": "dist/utils/cli.js"
   },
   "files": [
     "dist/*",
