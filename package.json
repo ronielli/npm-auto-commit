@@ -1,12 +1,14 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "",
   "main": "dist/index.js",
-  "bin": "dist/index.js",
-  "exports": {
-    "./dist/*": "./dist/*"
+  "bin": {
+    "npm-auto-commit": "dist/index.js"
   },
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "npm-auto-commit": "node dist/index.js",
