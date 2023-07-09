@@ -70,16 +70,20 @@ const file = args.some(
 
 if (add) {
   exec(`git add .`);
-  const status = exec('git status --porcelain', { silent: true }).stdout;
+  const status = exec('git diff --cached --name-only | wc -l', {
+    silent: true,
+  }).stdout.trim();
 
-  if (!status) {
+  if (status === '0') {
     console.log(yellow('Nada para commitar!'));
     process.exit(0);
   }
 } else {
-  const status = exec('git status --porcelain', { silent: true }).stdout;
-  console.log(status);
-  if (!status) {
+  const status = exec('git diff --cached --name-only | wc -l', {
+    silent: true,
+  }).stdout.trim();
+
+  if (status === '0') {
     console.log(yellow('Nada para commitar!'));
     process.exit(0);
   }
