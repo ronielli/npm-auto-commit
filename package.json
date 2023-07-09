@@ -1,10 +1,10 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "",
   "main": "dist/index.js",
   "bin": {
-    "npm-auto-commit": "dist/index.js"
+    "npm-run-all": "bin/npm-run-all/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
