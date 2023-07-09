@@ -67,7 +67,6 @@ const bigger = args.some((arg) => arg.startsWith('-') && arg.includes('b'));
 const file = args.some(
   (arg) => args.includes('-file') || (arg.startsWith('-') && arg.includes('f')),
 );
-
 if (add) {
   exec(`git add .`);
   const status = exec('git diff --cached --name-only | wc -l', {
