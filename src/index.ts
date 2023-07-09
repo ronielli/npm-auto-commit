@@ -65,8 +65,13 @@ const bigger = args.some((arg) => arg.startsWith('-') && arg.includes('b'));
 
 if (add) {
   exec(`git add .`);
+  const status = exec('git status --porcelain', { silent: true }).stdout;
+  if (!status) {
+    console.log(yellow('Nada para commitar!'));
+    process.exit(0);
+  }
 } else {
-  const status = exec('git status --porcelain').stdout;
+  const status = exec('git status --porcelain', { silent: true }).stdout;
   if (!status) {
     console.log(yellow('Nada para commitar!'));
     process.exit(0);
@@ -75,7 +80,6 @@ if (add) {
 
 const message = new Message(description);
 
-// git pull
 exec('git pull', { silent: true });
 
 const currentVersion =
