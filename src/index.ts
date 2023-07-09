@@ -78,8 +78,6 @@ const message = new Message(description);
 // git pull
 exec('git pull', { silent: true });
 
-console.log('-------+++++++++++++++-------');
-
 const currentVersion =
   exec('git describe --abbrev=0 --tags', { silent: true }).stdout.trim() ||
   '0.0.0';
@@ -102,6 +100,7 @@ rl.question('Deseja continuar? (s/n)', (answer) => {
     exec(`git commit -m "${message.toString()}"`);
     exec(`git tag ${newVersion}`);
     exec(`git push`);
+    exec(`git push --tags`);
     console.log(green('Commit realizado com sucesso!'));
   } else {
     console.log(yellow('Commit cancelado!'));
