@@ -1,8 +1,8 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --ext .ts src/ --fix",
