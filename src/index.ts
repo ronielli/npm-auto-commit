@@ -149,7 +149,7 @@ export function cli() {
         exec(`git add ./package.json`, { silent: true, cwd: currentDirectory });
       }
 
-      exec(`git commit -m "${message.toString()}"`, {
+      exec(`git commit -m "${message.toString()}"\n - dsdsdsdsdsds`, {
         silent: true,
         cwd: currentDirectory,
       });
