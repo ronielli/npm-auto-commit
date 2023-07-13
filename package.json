@@ -1,6 +1,6 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "",
   "main": "dist/cli.js",
   "bin": {
@@ -39,6 +39,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "semver": "^7.5.4",
     "shelljs": "^0.8.5",
     "zod": "^3.21.4"
   }
