@@ -86,9 +86,12 @@ class Mensagem {
 
     return `git commit -m "${this.type}${
       this.scope ? `(${this.scope})` : ''
-    }: ${title}" -m "${rest
-      .map((item) => `- ${item.trim()}`)
-      .reduce((acc, item) => `${acc}\n${item}`)}"`;
+    }: ${title}" -m "${
+      rest.length > 0 &&
+      rest
+        .map((item) => `- ${item.trim()}`)
+        .reduce((acc, item) => `${acc}\n${item}`)
+    }"`;
   }
 }
 
