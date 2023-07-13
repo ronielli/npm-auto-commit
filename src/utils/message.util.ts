@@ -86,15 +86,14 @@ class Mensagem {
 
     const mensagem = `git commit -m "${this.type}${
       this.scope ? `(${this.scope})` : ''
-    }: ${title}" ${
+    }: ${title.trim()}"${
       rest.length === 0
         ? ''
-        : '-m' +
-          rest
+        : ` -m "${rest
             .map((item) => `- ${item.trim()}`)
-            .reduce((acc, item) => `${acc}\n${item}`)
+            .reduce((acc, item) => `${acc}\n${item}`)}"`
     }`;
-    console.log(mensagem);
+    console.log(mensagem, '1');
 
     return mensagem;
   }
