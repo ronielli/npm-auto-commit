@@ -84,14 +84,19 @@ class Mensagem {
   toCommit() {
     const [title, ...rest] = this.description.split('-');
 
-    return `git commit -m "${this.type}${
+    const mensagem = `git commit -m "${this.type}${
       this.scope ? `(${this.scope})` : ''
-    }: ${title}" -m "${
-      rest.length > 0 &&
-      rest
-        .map((item) => `- ${item.trim()}`)
-        .reduce((acc, item) => `${acc}\n${item}`)
-    }"`;
+    }: ${title}" ${
+      rest.length === 0
+        ? ''
+        : '-m' +
+          rest
+            .map((item) => `- ${item.trim()}`)
+            .reduce((acc, item) => `${acc}\n${item}`)
+    }`;
+    console.log(mensagem);
+
+    return mensagem;
   }
 }
 
