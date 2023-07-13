@@ -136,7 +136,6 @@ export function cli() {
     input: process.stdin,
     output: process.stdout,
   });
-
   rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
       if (file) {
