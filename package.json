@@ -1,6 +1,6 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "",
   "main": "dist/cli.js",
   "bin": {
@@ -18,7 +18,7 @@
     "format": "prettier --write src/**/*.{ts,tsx}",
     "build": "tsc",
     "start": "tsx src/cli.ts",
-    "deploy": "yarn build && npm publish --access public"
+    "deploy": "npm run build && npm publish"
   },
   "keywords": [],
   "author": "",
