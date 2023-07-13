@@ -93,7 +93,6 @@ class Mensagem {
             .map((item) => `- ${item.trim()}`)
             .reduce((acc, item) => `${acc}\n${item}`)}"`
     }`;
-    console.log(mensagem);
 
     return mensagem;
   }
