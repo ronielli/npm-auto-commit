@@ -17,7 +17,7 @@ export function cli() {
       cwd: currentDirectory,
     }).stdout
   ) {
-    console.log(yellow('Git não está instalado!'));
+    console.log(yellow('O Git não está instalado!'));
     process.exit(1);
   }
   const user = exec('git config --global user.email', {
@@ -26,7 +26,7 @@ export function cli() {
   }).stdout.trim();
 
   if (!user) {
-    console.log(yellow('Git não está configurado!'));
+    console.log(yellow('O Git não está configurado!'));
     process.exit(1);
   }
 
@@ -36,13 +36,15 @@ export function cli() {
       cwd: currentDirectory,
     }).stdout
   ) {
-    console.log(yellow('Não foi iniciado um repositório git!'));
+    console.log(yellow('Nenhum repositório Git foi inicializado!'));
     process.exit(1);
   }
 
+  exec('git pull', { silent: true, cwd: currentDirectory });
+
   const args = process.argv.slice(2);
   if (args.length === 0) {
-    console.log(red('Nenhum argumento foi passado!'));
+    console.log(red('Nenhum argumento foi fornecido!'));
     console.log(
       yellow('Exemplo:'),
       green(
@@ -54,7 +56,7 @@ export function cli() {
   const description = args.find((arg) => !arg.startsWith('-'))?.trim();
 
   if (!description) {
-    console.log(red('Nenhuma descrição foi passada!'));
+    console.log(red('Nenhuma descrição foi fornecida!'));
     console.log(
       yellow('Exemplo:'),
       green(
@@ -83,7 +85,7 @@ export function cli() {
     }).stdout.trim();
 
     if (status === '0') {
-      console.log(yellow('Nada para commitar!'));
+      console.log(yellow('Nada para comitar!'));
       process.exit(0);
     }
   } else {
@@ -92,7 +94,7 @@ export function cli() {
       cwd: currentDirectory,
     }).stdout.trim();
     if (status === '0') {
-      console.log(yellow('Nada para commitar!'));
+      console.log(yellow('Nada para comitar!'));
       process.exit(0);
     }
   }
@@ -113,11 +115,11 @@ export function cli() {
   );
 
   if (!newVersion) {
-    console.log(red('Tipo de commit não requer versionamento!'));
+    console.log(red('O tipo de commit não requer versionamento!'));
     process.exit(0);
   }
   // mostrar o que vai ser commitado
-  console.log(green('Mensagem:'), message.toString());
+  console.log(green('Mensagem de commit:'), message.toString());
   console.log(green('Versão atual:'), currentVersion);
   console.log(green('Nova versão:'), newVersion);
   const rl = createInterface({
@@ -125,7 +127,7 @@ export function cli() {
     output: process.stdout,
   });
 
-  rl.question('Deseja continuar? (s/n)', async (answer) => {
+  rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
       if (file) {
         writeFileSync('./version.txt', newVersion);
