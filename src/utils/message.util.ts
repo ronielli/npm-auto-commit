@@ -80,6 +80,13 @@ class Mensagem {
       this.description
     }`;
   }
+
+  toCommit() {
+    const [title, ...rest] = this.description.split('-');
+    return `git commit -m "${this.type}${
+      this.scope ? `(${this.scope})` : ''
+    }: ${title}" -m "${rest.map((item) => item.trim())}"`;
+  }
 }
 
 export default Mensagem;
