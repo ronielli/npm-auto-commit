@@ -131,6 +131,7 @@ export function cli() {
     green('Arquivos que serão comitados:'),
     files.split('\n').join(', '),
   );
+
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
