@@ -1,10 +1,10 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "",
-  "main": "dist/utils/cli.js",
+  "main": "dist/cli.js",
   "bin": {
-    "npm-auto-commit": "dist/utils/cli.js"
+    "npm-auto-commit": "dist/cli.js"
   },
   "files": [
     "dist/*",
@@ -17,7 +17,7 @@
     "lint": "eslint --ext .ts src/ --fix",
     "format": "prettier --write src/**/*.{ts,tsx}",
     "build": "tsc",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/cli.ts"
   },
   "keywords": [],
   "author": "",

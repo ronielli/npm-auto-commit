@@ -7,10 +7,14 @@ import { inc } from 'semver';
 import Message from './utils/message.util';
 import handleType from './utils/handleType.utils';
 import { green, red, yellow } from './utils/colors.util';
+
+const currentDirectory = process.cwd();
+
 export function cli() {
   if (
     !exec('git --version', {
       silent: true,
+      cwd: currentDirectory,
     }).stdout
   ) {
     console.log(yellow('Git não está instalado!'));
@@ -18,6 +22,7 @@ export function cli() {
   }
   const user = exec('git config --global user.email', {
     silent: true,
+    cwd: currentDirectory,
   }).stdout.trim();
 
   if (!user) {
@@ -28,6 +33,7 @@ export function cli() {
   if (
     !exec('git rev-parse --is-inside-work-tree', {
       silent: true,
+      cwd: currentDirectory,
     }).stdout
   ) {
     console.log(yellow('Não foi iniciado um repositório git!'));
@@ -70,9 +76,10 @@ export function cli() {
       args.includes('-file') || (arg.startsWith('-') && arg.includes('f')),
   );
   if (add) {
-    exec(`git add .`);
+    exec(`git add .`, { silent: true, cwd: currentDirectory });
     const status = exec('git diff --cached --name-only | wc -l', {
       silent: true,
+      cwd: currentDirectory,
     }).stdout.trim();
 
     if (status === '0') {
@@ -82,6 +89,7 @@ export function cli() {
   } else {
     const status = exec('git diff --cached --name-only | wc -l', {
       silent: true,
+      cwd: currentDirectory,
     }).stdout.trim();
     if (status === '0') {
       console.log(yellow('Nada para commitar!'));
@@ -91,11 +99,13 @@ export function cli() {
 
   const message = new Message(description);
 
-  exec('git pull', { silent: true });
+  exec('git pull', { silent: true, cwd: currentDirectory });
 
   const currentVersion =
-    exec('git describe --abbrev=0 --tags', { silent: true }).stdout.trim() ||
-    '0.0.0';
+    exec('git describe --abbrev=0 --tags', {
+      silent: true,
+      cwd: currentDirectory,
+    }).stdout.trim() || '0.0.0';
   const versionType = bigger ? 'major' : handleType(message.getType());
   const newVersion = inc(
     currentVersion,
@@ -119,18 +129,21 @@ export function cli() {
     if (answer.toLowerCase() === 's') {
       if (file) {
         writeFileSync('./version.txt', newVersion);
-        exec(`git add ./version.txt`);
+        exec(`git add ./version.txt`, { silent: true, cwd: currentDirectory });
       } else {
         const json = JSON.parse(readFileSync('./package.json').toString());
         json.version = newVersion;
         writeFileSync('./package.json', JSON.stringify(json, null, 2));
-        exec(`git add ./package.json`);
+        exec(`git add ./package.json`, { silent: true, cwd: currentDirectory });
       }
 
-      exec(`git commit -m "${message.toString()}"`);
-      exec(`git tag ${newVersion}`);
-      exec(`git push`);
-      exec(`git push --tags`);
+      exec(`git commit -m "${message.toString()}"`, {
+        silent: true,
+        cwd: currentDirectory,
+      });
+      exec(`git tag ${newVersion}`, { silent: true, cwd: currentDirectory });
+      exec(`git push`, { silent: true, cwd: currentDirectory });
+      exec(`git push --tags`, { silent: true, cwd: currentDirectory });
       console.log(green('Commit realizado com sucesso!'));
     } else {
       console.log(yellow('Commit cancelado!'));
