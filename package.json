@@ -1,6 +1,6 @@
 {
   "name": "npm-auto-commit",
-  "version": "0.0.26",
+  "version": "0.1.0",
   "description": "",
   "main": "dist/cli.js",
   "bin": {
@@ -17,7 +17,7 @@
     "lint": "eslint --ext .ts src/ --fix",
     "format": "prettier --write src/**/*.{ts,tsx}",
     "build": "tsc",
-    "start": "tsx src/cli.ts",
+    "commitTest": "tsx src/cli.ts",
     "deploy": "npm run build && npm publish"
   },
   "keywords": [],

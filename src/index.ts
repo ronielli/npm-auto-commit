@@ -118,10 +118,20 @@ export function cli() {
     console.log(red('O tipo de commit não requer versionamento!'));
     process.exit(0);
   }
-  // mostrar o que vai ser commitado
+
   console.log(green('Mensagem de commit:'), message.toString());
   console.log(green('Versão atual:'), currentVersion);
   console.log(green('Nova versão:'), newVersion);
+  // mostra os arquivos que serão comitados separados por vírgula
+  const files = exec('git diff --cached --name-only', {
+    silent: true,
+    cwd: currentDirectory,
+  }).stdout.trim();
+  console.log(
+    green('Arquivos que serão comitados:'),
+    files.split('\n').join(', '),
+  );
+
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -148,6 +158,7 @@ export function cli() {
       exec(`git push --tags`, { silent: true, cwd: currentDirectory });
       console.log(green('Commit realizado com sucesso!'));
     } else {
+      exec(`git reset`, { silent: true, cwd: currentDirectory });
       console.log(yellow('Commit cancelado!'));
     }
     rl.close();
