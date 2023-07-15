@@ -10,32 +10,32 @@ O NPM Auto Commit é uma ferramenta de linha de comando que facilita o processo 
 
 Para usar o NPM Auto Commit, siga as etapas abaixo:
 
-1. Faça o clone deste repositório em sua máquina.
-2. Navegue até o diretório raiz do projeto.
-3. Execute o seguinte comando para instalar as dependências:
+1.  Faça o clone deste repositório em sua máquina.
+2.  Navegue até o diretório raiz do projeto.
+3.  Execute o seguinte comando para instalar as dependências:
 
-   ```shell
-   yarn add npm-auto-commit -G
-   ```
+    ```shell
+    yarn add npm-auto-commit -G
+    ```
 
-   ou
+    ou
 
-   ```shell
-   npm install npm-auto-commit -g
-   ```
+    ```shell
+    npm install npm-auto-commit -g
+    ```
 
-   ou
+    ou
 
-   ```shell
+    ```shell
     npx npm-auto-commit
-   ```
+    ```
 
 ## Utilização
 
 Para usar o NPM Auto Commit, execute o seguinte comando:
 
 ```shell
-yarn commit -a "<tipo>:sua descrição de commit"
+yarn commit -a "<tipo>:sua descrição de commit - <detalhe>"
 ```
 
 Substitua `"sua descrição de commit"` pela descrição real do seu commit.
@@ -75,27 +75,31 @@ feat: Adicionar funcionalidade de autenticação
 
 A descrição do commit será utilizada para determinar o tipo de commit e realizar o versionamento, se aplicável.
 
+## Detalhes do Commit
+
+Você pode adicionar detalhes ao commit, usando o caractere `-` (hífen) após a descrição do commit.
+
 ## Exemplo
 
 Aqui está um exemplo de uso do NPM Auto Commit:
 
 ```shell
-yarn commit -a "feat: Adicionar funcionalidade de autenticação"
+yarn commit -a "feat: Adicionar funcionalidade de autenticação -foi adicionado um token JWT para autenticação"
 ```
 
 ## Fluxo de Execução
 
 O NPM Auto Commit segue o seguinte fluxo de execução:
 
-1. Verifica se o Git está instalado. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-2. Verifica se o usuário do Git está configurado corretamente. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-3. Verifica se um repositório Git foi iniciado. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-4. Executa `git pull` para atualizar o repositório local.
-5. Verifica se foram passados argumentos na linha de comando. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-6. Extrai a descrição do commit dos argumentos passados.
-7. Verifica se a opção `-add` foi passada. Caso positivo, executa `git add .` para adicionar todos os arquivos modificados ao commit.
-8. Verifica se há arquivos modificados para commitar. Caso não haja, exibe uma mensagem informando que não há nada para commitar e encerra o programa.
-9. Cria uma mensagem de commit com base na descrição fornecida.
+1.  Verifica se o Git está instalado. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
+2.  Verifica se o usuário do Git está configurado corretamente. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
+3.  Verifica se um repositório Git foi iniciado. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
+4.  Executa `git pull` para atualizar o repositório local.
+5.  Verifica se foram passados argumentos na linha de comando. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
+6.  Extrai a descrição do commit dos argumentos passados.
+7.  Verifica se a opção `-add` foi passada. Caso positivo, executa `git add .` para adicionar todos os arquivos modificados ao commit.
+8.  Verifica se há arquivos modificados para commitar. Caso não haja, exibe uma mensagem informando que não há nada para commitar e encerra o programa.
+9.  Cria uma mensagem de commit com base na descrição fornecida.
 10. Obtém a versão atual do projeto com base nas tags do Git.
 11. Determina o tipo de versão com base no tipo de commit ou na opção `-b`.
 12. Incrementa a versão atual com base no tipo de versão.

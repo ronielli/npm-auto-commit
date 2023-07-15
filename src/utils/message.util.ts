@@ -7,12 +7,23 @@ class Mensagem {
   private validType = ['feat', 'fix', 'docs', 'refactor', 'test', 'chore'];
 
   constructor(message: string) {
-    // verificar se a mensagem é válida
     message = message.trim();
 
     this.type = this.handleType(message);
     this.scope = this.handleScope(message);
     this.description = this.handleDescription(message);
+    const [title] = this.description.split('-');
+
+    if (title.trim().length === 0) {
+      console.log(yellow('Mensagem inválida! Não há título!'));
+      console.log(
+        yellow('Exemplo:'),
+        green(
+          'yarn npm-auto-commit -a "feat: Adicionar funcionalidade de autenticação"',
+        ),
+      );
+      process.exit(1);
+    }
   }
 
   handleType(message: string) {

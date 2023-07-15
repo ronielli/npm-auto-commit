@@ -122,7 +122,7 @@ export function cli() {
   console.log(green('Mensagem de commit:'), message.toString());
   console.log(green('Versão atual:'), currentVersion);
   console.log(green('Nova versão:'), newVersion);
-  // mostra os arquivos que serão comitados separados por vírgula
+
   const files = exec('git diff --cached --name-only', {
     silent: true,
     cwd: currentDirectory,
