@@ -104,7 +104,7 @@ export function cli() {
   exec('git pull', { silent: true, cwd: currentDirectory });
 
   const currentVersion =
-    exec('git describe --abbrev=0 --tags', {
+    exec('git describe --tags $(git rev-list --tags --max-count=1)', {
       silent: true,
       cwd: currentDirectory,
     }).stdout.trim() || '0.0.0';
