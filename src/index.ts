@@ -104,10 +104,13 @@ export function cli() {
   exec('git pull', { silent: true, cwd: currentDirectory });
 
   const currentVersion =
-    exec('git describe --tags $(git rev-list --tags --max-count=1)', {
+    exec('git describe --tags --abbrev=0 --all', {
       silent: true,
       cwd: currentDirectory,
-    }).stdout.trim() || '0.0.0';
+    })
+      .stdout.trim()
+      .replace(/^tags\//, '') || '0.0.0';
+
   const versionType = bigger ? 'major' : handleType(message.getType());
   const newVersion = inc(
     currentVersion,
