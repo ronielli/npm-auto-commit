@@ -173,13 +173,9 @@ function getCurrentTag() {
 
 function verifyStatus() {
   try {
-    const status = execSync('git diff --cached --name-only | wc -l', {
-      cwd: currentDirectory,
-    })
-      .toString()
-      .trim();
+    const status = listFiles();
 
-    if (status === '0') {
+    if (status.length === 0) {
       console.log(yellow('Nada para comitar!'));
       process.exit(0);
     }
