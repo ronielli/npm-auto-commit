@@ -148,7 +148,12 @@ export function cli() {
 }
 function getCurrentTag() {
   try {
-    const gitDescribeOutput = execSync('git describe --tags --abbrev=0', {
+    const maxTagCommit = execSync('git rev-list --tags --max-count=1', {
+      cwd: currentDirectory,
+      encoding: 'utf-8',
+    }).trim();
+
+    const gitDescribeOutput = execSync(`git describe --tags ${maxTagCommit}`, {
       cwd: currentDirectory,
     });
 
