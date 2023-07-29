@@ -149,9 +149,13 @@ export function cli() {
 }
 function getCurrentTag() {
   try {
+    console.log(
+      `git describe --tags $(git rev-list --tags --max-count=1)`,
+      'git describe --tags $(git rev-list --tags --max-count=1)',
+    );
     const gitDescribeOutput = execSync(
       platform() === 'win32'
-        ? 'git describe --tags %^^(git rev-list --tags --max-count=1^)^'
+        ? 'git describe --tags "$(git rev-list --tags --max-count=1)"'
         : 'git describe --tags $(git rev-list --tags --max-count=1)',
       {
         cwd: currentDirectory,
