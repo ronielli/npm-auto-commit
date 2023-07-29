@@ -4,6 +4,8 @@ import { execSync } from 'child_process';
 
 import { inc } from 'semver';
 
+import pk from '../package.json';
+
 import Message from './utils/message.util';
 import handleType from './utils/handleType.utils';
 import { green, red, yellow } from './utils/colors.util';
@@ -37,6 +39,7 @@ export function cli() {
     process.exit(1);
   }
 
+  console.log(green('Auto commit versão:'), pk.version);
   pull();
 
   const args = process.argv.slice(2);
@@ -212,7 +215,6 @@ function pull() {
   try {
     // Attempt to run 'git pull' command
     execSync('git pull', { cwd: currentDirectory });
-    console.log(green('Pull OK!'));
   } catch (error) {
     // Handle errors from the 'git pull' command
     console.error('Error while pulling:', error);
