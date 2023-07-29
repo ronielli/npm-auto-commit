@@ -1,5 +1,6 @@
 import { createInterface } from 'readline';
 import { writeFileSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
 
 import { inc } from 'semver';
 
@@ -7,13 +8,10 @@ import Message from './utils/message.util';
 import handleType from './utils/handleType.utils';
 import { green, red, yellow } from './utils/colors.util';
 
-const { execSync } = require('child_process');
-
 const currentDirectory = process.cwd();
 
 export function cli() {
   const gitVersion = execSync('git --version', {
-    silent: true,
     cwd: currentDirectory,
   });
 
@@ -22,7 +20,6 @@ export function cli() {
     process.exit(1);
   }
   const user = execSync('git config --global user.email', {
-    silent: true,
     cwd: currentDirectory,
   });
 
@@ -32,7 +29,6 @@ export function cli() {
   }
 
   const isInitialized = execSync('git rev-parse --is-inside-work-tree', {
-    silent: true,
     cwd: currentDirectory,
   });
 
@@ -83,7 +79,7 @@ export function cli() {
     (arg) => arg.startsWith('-') && arg.includes('t'),
   );
 
-  if (add) execSync(`git add .`, { silent: true, cwd: currentDirectory });
+  if (add) execSync(`git add .`, { cwd: currentDirectory });
 
   verifyStatus();
   const message = new Message(description);
@@ -109,7 +105,6 @@ export function cli() {
     input: process.stdin,
     output: process.stdout,
   });
-
   rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
       if (file && newVersion && tagIncrement) {
@@ -118,7 +113,6 @@ export function cli() {
         });
         writeFileSync('./package.json', json);
         execSync(`git add ./package.json`, {
-          silent: true,
           cwd: currentDirectory,
         });
       } else {
@@ -126,27 +120,24 @@ export function cli() {
         json.version = newVersion;
         writeFileSync('./package.json', JSON.stringify(json, null, 2));
         execSync(`git add ./package.json`, {
-          silent: true,
           cwd: currentDirectory,
         });
       }
 
       execSync(message.toCommit(), {
-        silent: true,
         cwd: currentDirectory,
       });
 
-      execSync(`git push`, { silent: true, cwd: currentDirectory });
+      execSync(`git push`, { cwd: currentDirectory });
       if (tagIncrement && newVersion) {
         execSync(`git tag -a v${newVersion} -m "${message.toString()}"`, {
-          silent: true,
           cwd: currentDirectory,
         });
-        execSync(`git push --tags`, { silent: true, cwd: currentDirectory });
+        execSync(`git push --tags`, { cwd: currentDirectory });
       }
       console.log(green('Commit realizado com sucesso!'));
     } else {
-      execSync(`git reset`, { silent: true, cwd: currentDirectory });
+      execSync(`git reset`, { cwd: currentDirectory });
       console.log(yellow('Commit cancelado!'));
     }
     rl.close();
@@ -157,7 +148,6 @@ function getCurrentTag() {
     const gitDescribeOutput = execSync(
       'git describe --tags $(git rev-list --tags --max-count=1)',
       {
-        silent: true,
         cwd: currentDirectory,
       },
     );
@@ -181,7 +171,6 @@ function getCurrentTag() {
 function verifyStatus() {
   try {
     const status = execSync('git diff --cached --name-only | wc -l', {
-      silent: true,
       cwd: currentDirectory,
     })
       .toString()
@@ -222,14 +211,13 @@ function listFiles(): string[] {
 function pull() {
   try {
     // Attempt to run 'git pull' command
-    execSync('git pull', { silent: true, cwd: currentDirectory });
+    execSync('git pull', { cwd: currentDirectory });
     console.log(green('Pull OK!'));
   } catch (error) {
     // Handle errors from the 'git pull' command
     console.error('Error while pulling:', error);
     // Check if there are uncommitted changes
     const gitStatus = execSync('git status', {
-      silent: true,
       cwd: currentDirectory,
     }).toString();
     if (gitStatus.includes('Changes not staged for commit')) {
