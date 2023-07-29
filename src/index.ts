@@ -81,11 +81,11 @@ export function cli() {
   const tagIncrement = args.find(
     (arg) => arg.startsWith('-') && arg.includes('t'),
   );
+  const message = new Message(description);
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });
 
   verifyStatus();
-  const message = new Message(description);
 
   console.log(green('Mensagem de commit:'), message.toString());
 
