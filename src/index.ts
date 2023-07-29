@@ -1,6 +1,7 @@
 import { createInterface } from 'readline';
 import { writeFileSync, readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { platform } from 'os';
 
 import { inc } from 'semver';
 
@@ -133,7 +134,7 @@ export function cli() {
 
       execSync(`git push`, { cwd: currentDirectory });
       if (tagIncrement && newVersion) {
-        execSync(`git tag -a v${newVersion} -m "${message.toString()}"`, {
+        execSync(`git tag -a ${newVersion} -m "${message.toString()}"`, {
           cwd: currentDirectory,
         });
         execSync(`git push --tags`, { cwd: currentDirectory });
@@ -149,7 +150,9 @@ export function cli() {
 function getCurrentTag() {
   try {
     const gitDescribeOutput = execSync(
-      'git describe --tags $(git rev-list --tags --max-count=1)',
+      platform() === 'win32'
+        ? 'git describe --tags %^^(git rev-list --tags --max-count=1^)^'
+        : 'git describe --tags $(git rev-list --tags --max-count=1)',
       {
         cwd: currentDirectory,
       },
