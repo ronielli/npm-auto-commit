@@ -120,7 +120,7 @@ export function cli() {
         //   cwd: currentDirectory,
         // });
         console.log(green('File:'), 'Não utilizado');
-      } else {
+      } else if (tagIncrement) {
         const json = JSON.parse(readFileSync('./package.json').toString());
         json.version = newVersion;
         writeFileSync('./package.json', JSON.stringify(json, null, 2));
