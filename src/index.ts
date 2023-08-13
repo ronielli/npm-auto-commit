@@ -192,12 +192,13 @@ function verifyStatus() {
 
 function listFiles(): string[] {
   try {
-    // Run 'git diff' command with '--name-status' option
     const gitDiffOutput = execSync('git diff --cached --name-only', {
       cwd: currentDirectory,
     })
       .toString()
       .trim();
+
+    console.log(gitDiffOutput);
     const lines = gitDiffOutput.split('\n');
 
     // Extract file modifications
