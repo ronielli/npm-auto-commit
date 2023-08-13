@@ -115,6 +115,7 @@ export function cli() {
         // const json = JSON.stringify({
         //   version: newVersion,
         // });
+
         // writeFileSync('./package.json', json);
         // execSync(`git add ./package.json`, {
         //   cwd: currentDirectory,
