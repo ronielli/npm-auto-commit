@@ -99,6 +99,7 @@ export function cli() {
     currentVersion,
     versionType as 'major' | 'minor' | 'patch',
   );
+
   if (tagIncrement && newVersion) {
     console.log(green('Versão atual:'), currentVersion);
     console.log(green('Nova versão:'), newVersion);
@@ -111,13 +112,14 @@ export function cli() {
   rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
       if (file && newVersion && tagIncrement) {
-        const json = JSON.stringify({
-          version: newVersion,
-        });
-        writeFileSync('./package.json', json);
-        execSync(`git add ./package.json`, {
-          cwd: currentDirectory,
-        });
+        // const json = JSON.stringify({
+        //   version: newVersion,
+        // });
+        // writeFileSync('./package.json', json);
+        // execSync(`git add ./package.json`, {
+        //   cwd: currentDirectory,
+        // });
+        console.log(green('File:'), 'Não utilizado');
       } else {
         const json = JSON.parse(readFileSync('./package.json').toString());
         json.version = newVersion;
