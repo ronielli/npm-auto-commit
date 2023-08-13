@@ -198,10 +198,11 @@ function listFiles(): string[] {
       .toString()
       .trim();
 
-    console.log(gitDiffOutput);
-    const lines = gitDiffOutput.split('\n');
+    if (gitDiffOutput.length === 0) {
+      return [];
+    }
 
-    console.log(lines);
+    const lines = gitDiffOutput.split('\n');
 
     // Extract file modifications
     const fileModifications = lines.map((line: string) => {
