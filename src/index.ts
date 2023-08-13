@@ -204,7 +204,6 @@ function listFiles(): string[] {
 
     const lines = gitDiffOutput.split('\n');
 
-    // Extract file modifications
     const fileModifications = lines.map((line: string) => {
       return line.trim();
     });
