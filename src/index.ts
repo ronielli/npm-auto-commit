@@ -179,7 +179,7 @@ function getCurrentTag() {
 function verifyStatus() {
   try {
     const status = listFiles();
-
+    console.log(status);
     if (status.length === 0) {
       console.log(yellow('Nada para comitar!'));
       process.exit(0);
