@@ -154,15 +154,13 @@ function getCurrentTag() {
 
     const currentVersion = gitDescribeOutput.toString().trim();
 
-    // Check if the output is a valid version tag using a regular expression
     if (/^v?\d+\.\d+\.\d+/.test(currentVersion)) {
-      return currentVersion.replace(/^v/, ''); // Remove 'v' prefix if present
+      return currentVersion.replace(/^v/, '');
     } else {
       console.log('Invalid version tag found:', currentVersion);
       return '0.0.0';
     }
   } catch (error) {
-    // If an error occurs (e.g., there are no tags), return '0.0.0'
     console.error('Error while getting current tag:', error);
     return '0.0.0';
   }
@@ -178,7 +176,7 @@ function verifyStatus() {
     }
   } catch (error) {
     console.error('Error while verifying status:', error);
-    process.exit(1); // Exit with an error code if an error occurs
+    process.exit(1);
   }
 }
 
