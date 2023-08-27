@@ -108,7 +108,7 @@ export function cli() {
     if (answer.toLowerCase() === 's') {
       const patchPackageJson = './package.json';
 
-      if (existsSync(patchPackageJson)) {
+      if (existsSync(patchPackageJson) && newVersion) {
         const packageJson = readFileSync(patchPackageJson);
         const json = JSON.parse(packageJson.toString());
         json.version = newVersion;
