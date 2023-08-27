@@ -13,6 +13,22 @@ import { green, red, yellow } from './utils/colors.util';
 const currentDirectory = process.cwd();
 
 export function cli() {
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    console.log(red('Nenhum argumento foi fornecido!'));
+    console.log(
+      yellow('Exemplo:'),
+      green(
+        'yarn npm-auto-commit -a "feat: Adicionar funcionalidade de autenticação"',
+      ),
+    );
+    process.exit(1);
+  }
+
+  if (args.includes('-v') || args.includes('--version')) {
+    showVersion();
+    process.exit(0);
+  }
   const gitVersion = execSync('git --version', {
     cwd: currentDirectory,
   });
@@ -41,18 +57,6 @@ export function cli() {
 
   console.log(green('Auto commit versão:'), pk.version);
   pull();
-
-  const args = process.argv.slice(2);
-  if (args.length === 0) {
-    console.log(red('Nenhum argumento foi fornecido!'));
-    console.log(
-      yellow('Exemplo:'),
-      green(
-        'yarn npm-auto-commit -a "feat: Adicionar funcionalidade de autenticação"',
-      ),
-    );
-    process.exit(1);
-  }
   const description = args.find((arg) => !arg.startsWith('-'))?.trim();
 
   if (!description) {
@@ -225,4 +229,10 @@ function pull() {
       throw new Error('Failed to pull from the remote repository.');
     }
   }
+}
+
+// mostrar versão atual do pacote
+
+function showVersion() {
+  console.log('Versão atual:', pk.version);
 }
