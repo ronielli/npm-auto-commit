@@ -1,5 +1,5 @@
 import { createInterface } from 'readline';
-import { writeFileSync, readFileSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 
 import { inc } from 'semver';
@@ -106,12 +106,13 @@ export function cli() {
   });
   rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
-      const package_json = readFileSync('./package.json');
+      const patchPackageJson = './package.json';
 
-      if (package_json) {
-        const json = JSON.parse(package_json.toString());
+      if (existsSync(patchPackageJson)) {
+        const packageJson = readFileSync(patchPackageJson);
+        const json = JSON.parse(packageJson.toString());
         json.version = newVersion;
-        writeFileSync('./package.json', JSON.stringify(json, null, 2));
+        writeFileSync(patchPackageJson, JSON.stringify(json, null, 2));
         execSync(`git add ./package.json`, {
           cwd: currentDirectory,
         });
