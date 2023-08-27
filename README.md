@@ -46,7 +46,6 @@ O NPM Auto Commit também oferece algumas opções adicionais:
 
 - `-add` ou `-a`: Adiciona automaticamente todos os arquivos modificados antes de fazer o commit.
 - `-b`: Incrementa a versão maior (major) em vez de usar o tipo de commit para determinar o incremento da versão.
-- `-file` ou `-f`: Indica que o versionamento será feito em um arquivo separado em vez do arquivo `package.json`.
 
 ## Tipos de Commit
 

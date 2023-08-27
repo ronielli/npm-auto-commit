@@ -73,11 +73,6 @@ export function cli() {
 
   const bigger = args.some((arg) => arg.startsWith('-') && arg.includes('b'));
 
-  const file = args.some(
-    (arg) =>
-      args.includes('-file') || (arg.startsWith('-') && arg.includes('f')),
-  );
-
   const tagIncrement = args.find(
     (arg) => arg.startsWith('-') && arg.includes('t'),
   );
@@ -111,18 +106,10 @@ export function cli() {
   });
   rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
-      if (file && newVersion && tagIncrement) {
-        // const json = JSON.stringify({
-        //   version: newVersion,
-        // });
+      const package_json = readFileSync('./package.json');
 
-        // writeFileSync('./package.json', json);
-        // execSync(`git add ./package.json`, {
-        //   cwd: currentDirectory,
-        // });
-        console.log(green('File:'), 'Não utilizado');
-      } else if (tagIncrement) {
-        const json = JSON.parse(readFileSync('./package.json').toString());
+      if (package_json) {
+        const json = JSON.parse(package_json.toString());
         json.version = newVersion;
         writeFileSync('./package.json', JSON.stringify(json, null, 2));
         execSync(`git add ./package.json`, {
@@ -155,6 +142,10 @@ function getCurrentTag() {
       cwd: currentDirectory,
       encoding: 'utf-8',
     }).trim();
+
+    if (maxTagCommit.length === 0) {
+      return '0.0.0';
+    }
 
     const gitDescribeOutput = execSync(`git describe --tags ${maxTagCommit}`, {
       cwd: currentDirectory,
