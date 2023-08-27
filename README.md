@@ -15,7 +15,7 @@ Para usar o NPM Auto Commit, siga as etapas abaixo:
 3.  Execute o seguinte comando para instalar as dependências:
 
     ```shell
-    yarn add npm-auto-commit -G
+    yarn global add npm-auto-commit
     ```
 
     ou
