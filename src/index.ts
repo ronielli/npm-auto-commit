@@ -6,13 +6,14 @@ import { inc } from 'semver';
 
 import pk from '../package.json';
 
+import { fetchCommitMessage } from './utils/reviseCommitMessage.util';
 import Message from './utils/message.util';
-import handleType from './utils/handleType.utils';
+import handleType from './utils/handleType.util';
 import { green, red, yellow } from './utils/colors.util';
 
 const currentDirectory = process.cwd();
 
-export function cli() {
+export async function cli() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
     console.log(red('Nenhum argumento foi fornecido!'));
@@ -85,8 +86,9 @@ export function cli() {
   if (add) execSync(`git add .`, { cwd: currentDirectory });
 
   verifyStatus();
+  const messageApi = await fetchCommitMessage(message.toString());
 
-  console.log(green('Mensagem de commit:'), message.toString());
+  console.log(green('Mensagem de commit:'), messageApi);
 
   const files = listFiles();
   console.log(green('Arquivos que serão comitados:'), files.join(', '));
@@ -128,7 +130,7 @@ export function cli() {
 
       execSync(`git push`, { cwd: currentDirectory });
       if (tagIncrement && newVersion) {
-        execSync(`git tag -a ${newVersion} -m "${message.toString()}"`, {
+        execSync(`git tag -a ${newVersion} -m "${messageApi}"`, {
           cwd: currentDirectory,
         });
         execSync(`git push --tags`, { cwd: currentDirectory });
