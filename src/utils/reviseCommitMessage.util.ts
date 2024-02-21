@@ -8,8 +8,8 @@ async function fetchCommitMessage(commitMessage: string): Promise<string> {
 
   const fetchTimeout = new Promise<string>((resolve) => {
     setTimeout(() => {
-      resolve(commitMessage); // Resolve com a mensagem original após 10 segundos
-    }, 10000); // 10 segundos
+      resolve(commitMessage);
+    }, 10000);
   });
 
   try {
