@@ -13,7 +13,6 @@ class Mensagem {
     this.scope = this.handleScope(message);
     this.description = this.handleDescription(message);
     const [title] = this.description.split('-');
-
     if (title.trim().length === 0) {
       console.log(yellow('Mensagem inválida! Não há título!'));
       console.log(
