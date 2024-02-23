@@ -83,6 +83,7 @@ export async function cli() {
   );
 
   const messageApi = await fetchCommitMessage(description);
+
   const message = new Message(messageApi);
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });
@@ -131,7 +132,7 @@ export async function cli() {
 
       execSync(`git push`, { cwd: currentDirectory });
       if (tagIncrement && newVersion) {
-        execSync(`git tag -a ${newVersion} -m "${message.toCommit()}"`, {
+        execSync(`git tag -a ${newVersion} -m "${message.toString()}"`, {
           cwd: currentDirectory,
         });
         execSync(`git push --tags`, { cwd: currentDirectory });
