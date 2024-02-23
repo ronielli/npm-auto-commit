@@ -94,30 +94,17 @@ class Mensagem {
   toCommit() {
     const [title, ...rest] = this.description.split('-');
 
-    // const mensagem = `git commit -m "${this.type}${
-    //   this.scope ? `(${this.scope})` : ''
-    // }: ${title.trim()}"${
-    //   rest.length === 0
-    //     ? ''
-    //     : ` -m "${rest
-    //         .map((item) => `- ${item.trim()}`)
-    //         .reduce((acc, item) => `${acc}\n${item}`)}"`
-    // }`;
+    const mensagem = `git commit -m "${this.type}${
+      this.scope ? `(${this.scope})` : ''
+    }: ${title.trim()}"${
+      rest.length === 0
+        ? ''
+        : ` -m "${rest
+            .map((item) => `- ${item.trim()}`)
+            .reduce((acc, item) => `${acc}\n${item}`)}"`
+    }`;
 
-    console.log(
-      '-----------',
-      `git commit -m "${this.type}${
-        this.scope ? `(${this.scope})` : ''
-      }: ${title.trim()}"${
-        rest.length === 0
-          ? ''
-          : ` -m "${rest
-              .map((item) => `- ${item.trim()}`)
-              .reduce((acc, item) => `${acc}\n${item}`)}"`
-      }`,
-    );
-
-    return 'ls';
+    return mensagem;
   }
 }
 
