@@ -81,14 +81,15 @@ export async function cli() {
   const tagIncrement = args.find(
     (arg) => arg.startsWith('-') && arg.includes('t'),
   );
-  const message = new Message(description);
+
+  const messageApi = await fetchCommitMessage(description);
+  const message = new Message(messageApi);
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });
 
   verifyStatus();
-  const messageApi = await fetchCommitMessage(message.toString());
 
-  console.log(green('Mensagem de commit:'), messageApi);
+  console.log(green('Mensagem de commit:'), message.toString());
 
   const files = listFiles();
   console.log(green('Arquivos que serão comitados:'), files.join(', '));
@@ -130,7 +131,7 @@ export async function cli() {
 
       execSync(`git push`, { cwd: currentDirectory });
       if (tagIncrement && newVersion) {
-        execSync(`git tag -a ${newVersion} -m "${messageApi}"`, {
+        execSync(`git tag -a ${newVersion} -m "${message.toCommit()}"`, {
           cwd: currentDirectory,
         });
         execSync(`git push --tags`, { cwd: currentDirectory });
