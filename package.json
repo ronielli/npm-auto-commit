@@ -1,6 +1,6 @@
 {
   "name": "npm-auto-commit",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "",
   "main": "dist/cli.js",
   "bin": {
