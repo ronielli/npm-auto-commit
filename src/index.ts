@@ -84,6 +84,7 @@ export async function cli() {
 
   const messageApi = await fetchCommitMessage(description);
 
+  console.log(green('Mensagem de commit:'), messageApi);
   const message = new Message(messageApi);
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });

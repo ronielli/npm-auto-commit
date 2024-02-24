@@ -28,11 +28,12 @@ async function fetchCommitMessage(commitMessage: string): Promise<string> {
               content: `Seu objetivo é fornecer uma versão melhorada e formatada de uma mensagem de commit com base na descrição fornecida.
                         Não adicione comentários adicionais.
                         foque apenas na mensagem de commit.
-                        Mantenha o prefixo especificado (fix:, feat:, etc.) inalterado no início da mensagem.
+                        "Mantenha o prefixo especificado (fix:, feat:, etc.) inalterado no início da mensagem. remova os espaços em branco desnecessários e deixar sempre em caixa baixa".
                         Mantenha o tempo verbal fornecido na descrição original.
                         Mantenha a descrição original intacta.
                         Revise a mensagem para garantir que está conforme as diretrizes de formatação.
-                        Utilize verbos no infinitivo somente se houver referência ao usuário no texto.                     `,
+                        "não Utilize verbos no infinitivo, use apenas se houver referência ao usuário no texto".
+                        prefira usar sempre terceira pessoa do plural.`,
             },
             {
               role: 'user',
