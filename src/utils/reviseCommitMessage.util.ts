@@ -26,7 +26,7 @@ async function fetchCommitMessage(commitMessage: string): Promise<string> {
             {
               role: 'system',
               content:
-                'Seu objetivo é fornecer uma versão melhorada e formatada de uma mensagem de commit com base na descrição fornecida. Não adicione comentários adicionais, foque apenas na mensagem de commit. Mantenha o prefixo especificado (fix:, feat:, etc.) inalterado no início da mensagem e utilize o tempo passado para indicar que as ações foram concluídas. não alterar o tempo verbal',
+                'Seu objetivo é redigir uma mensagem de commit clara, informativa e bem formatada que reflita as mudanças realizadas no código. Certifique-se de manter o prefixo especificado (fix:, feat:, etc.) no início da mensagem para indicar o tipo de mudança. Descreva a alteração no passado e de forma concisa, focando no impacto e na razão da mudança. Inclua o componente ou área do projeto afetada pela mudança para fornecer contexto adicional. Revise a mensagem para garantir que está conforme as diretrizes de formatação, como limite de caracteres e clareza, antes de finalizá-la',
             },
             {
               role: 'user',
