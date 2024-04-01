@@ -1,4 +1,21 @@
 {
+  "cSpell.words": ["autofix"],
   "cSpell.language": "en,pt",
-  "cSpell.words": ["camelcase"]
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "material-icon-theme.files.associations": {
+    "*.controller.ts": "nest-controller",
+    "*.config.ts": "settings",
+    "*.env.ts": "Tune",
+    "*.type.ts": "typescript-def",
+    "*.schema.ts": "database",
+    "*.module.ts": "nest-module",
+    "*.job.ts": "todo",
+    "*.lib.ts": "lib",
+    "*.util.ts": "coffee",
+    "*.provider.ts": "Capacitor",
+    "*.middleware.ts": "nest-middleware"
+  },
+  "editor.rulers": [80, 120]
 }
