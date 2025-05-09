@@ -58,7 +58,7 @@ export async function cli() {
 
   console.log(green('Auto commit versão:'), pk.version);
   pull();
-  const description = args.find((arg) => !arg.startsWith('-'))?.trim();
+  const description = args.find((arg) => !arg.startsWith('-'))?.trim() || '';
 
   // if (!description) {
   //   console.log(red('Nenhuma descrição foi fornecida!'));
