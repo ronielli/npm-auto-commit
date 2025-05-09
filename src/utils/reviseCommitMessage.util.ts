@@ -1,4 +1,7 @@
-async function fetchCommitMessage(commitMessage: string): Promise<string> {
+async function fetchCommitMessage(
+  commitMessage: string,
+  diff = '',
+): Promise<string> {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
   if (!OPENAI_API_KEY) {
@@ -21,23 +24,19 @@ async function fetchCommitMessage(commitMessage: string): Promise<string> {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-4.1',
           messages: [
             {
               role: 'system',
-              content: `Seu objetivo é fornecer uma versão melhorada e formatada de uma mensagem de commit com base na descrição fornecida.
-                        Não adicione comentários adicionais.
-                        foque apenas na mensagem de commit.
-                        "Mantenha o prefixo especificado (fix:, feat:, etc.) inalterado no início da mensagem. remova os espaços em branco desnecessários e deixar sempre em caixa baixa".
-                        Mantenha o tempo verbal fornecido na descrição original.
-                        Mantenha a descrição original intacta.
-                        Revise a mensagem para garantir que está conforme as diretrizes de formatação.
-                        "não Utilize verbos no infinitivo, use apenas se houver referência ao usuário no texto".
-                        prefira usar sempre terceira pessoa do plural.`,
+              content:
+                'Você é um gerador de mensagens de commit. Com base em um diff e em um comentário de contexto, gere uma mensagem de commit em português, clara, curta e no estilo imperativo. Se a entrada contiver um prefixo como fix:, feat:, chore:, preserve-o no início da mensagem. Sua saída deve ser apenas a mensagem de commit — sem explicações, sem texto adicional.',
             },
             {
               role: 'user',
-              content: commitMessage,
+              content: `diff:
+                ${diff}
+                comentário:
+                    ${commitMessage}`,
             },
           ],
         }),

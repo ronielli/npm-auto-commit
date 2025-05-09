@@ -82,11 +82,13 @@ export async function cli() {
     (arg) => arg.startsWith('-') && arg.includes('t'),
   );
 
-  const messageApi = await fetchCommitMessage(description);
+  if (add) execSync(`git add .`, { cwd: currentDirectory });
+  const messageApi = await fetchCommitMessage(
+    description,
+    Message.diffCommit(),
+  );
 
   const message = new Message(messageApi);
-
-  if (add) execSync(`git add .`, { cwd: currentDirectory });
 
   verifyStatus();
 

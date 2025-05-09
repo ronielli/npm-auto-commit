@@ -1,5 +1,8 @@
+import { execSync } from 'child_process';
+
 import { green, red, yellow } from './colors.util';
 
+const currentDirectory = process.cwd();
 class Mensagem {
   private type: 'feat' | 'fix' | 'docs' | 'refactor' | 'test' | 'chore';
   private scope: string;
@@ -105,6 +108,15 @@ class Mensagem {
     }`;
 
     return mensagem;
+  }
+
+  // diff commit git diff --cached
+
+  static diffCommit() {
+    const diff = execSync('git diff --cached', {
+      cwd: currentDirectory,
+    });
+    return diff.toString();
   }
 }
 
