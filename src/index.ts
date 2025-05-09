@@ -60,16 +60,16 @@ export async function cli() {
   pull();
   const description = args.find((arg) => !arg.startsWith('-'))?.trim();
 
-  if (!description) {
-    console.log(red('Nenhuma descrição foi fornecida!'));
-    console.log(
-      yellow('Exemplo:'),
-      green(
-        'yarn npm-auto-commit -a "feat: Adicionar funcionalidade de autenticação"',
-      ),
-    );
-    process.exit(1);
-  }
+  // if (!description) {
+  //   console.log(red('Nenhuma descrição foi fornecida!'));
+  //   console.log(
+  //     yellow('Exemplo:'),
+  //     green(
+  //       'yarn npm-auto-commit -a "feat: Adicionar funcionalidade de autenticação"',
+  //     ),
+  //   );
+  //   process.exit(1);
+  // }
 
   const add = args.some(
     (arg) =>
