@@ -51,7 +51,9 @@ export async function fetchCommitMessage(
               'gere uma mensagem de commit em português, clara, curta e no estilo imperativo. ' +
               'adicione o prefixo fix:, feat:, chore:, se necessário.' +
               'preserve-o no início da mensagem. ' +
-              'Sua saída deve ser apenas a mensagem de commit — sem explicações, sem texto adicional.',
+              'Sua saída deve ser apenas a mensagem de commit — sem explicações, sem texto adicional.' +
+              'não use aspas no nome commit' +
+              'não colocar -',
           },
           {
             role: 'user',
