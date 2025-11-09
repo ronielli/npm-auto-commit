@@ -53,7 +53,7 @@ export async function fetchCommitMessage(
               'preserve-o no início da mensagem. ' +
               'Sua saída deve ser apenas a mensagem de commit — sem explicações, sem texto adicional.' +
               'não use aspas no nome commit' +
-              'não colocar -',
+              'não colocar - no nome commit',
           },
           {
             role: 'user',
