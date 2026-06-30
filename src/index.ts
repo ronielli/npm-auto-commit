@@ -1,5 +1,4 @@
 import { createInterface } from 'readline';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 
 import { inc } from 'semver';
@@ -9,6 +8,7 @@ import pk from '../package.json';
 import { fetchCommitMessage } from './utils/reviseCommitMessage.util';
 import Message from './utils/message.util';
 import handleType from './utils/handleType.util';
+import updatePackageVersion from './utils/updatePackageVersion.util';
 import { green, red, yellow } from './utils/colors.util';
 
 const currentDirectory = process.cwd();
@@ -105,16 +105,8 @@ export async function cli() {
   });
   rl.question('Deseja continuar? (s/n): ', async (answer) => {
     if (answer.toLowerCase() === 's') {
-      const patchPackageJson = './package.json';
-
-      if (existsSync(patchPackageJson) && newVersion) {
-        const packageJson = readFileSync(patchPackageJson);
-        const json = JSON.parse(packageJson.toString());
-        json.version = newVersion;
-        writeFileSync(patchPackageJson, JSON.stringify(json, null, 2));
-        execSync(`git add ./package.json`, {
-          cwd: currentDirectory,
-        });
+      if (newVersion) {
+        updatePackageVersion(newVersion, currentDirectory);
       }
 
       execSync(message.toCommit(), {
