@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 
 import { inc } from 'semver';
 import Enquirer from 'enquirer';
@@ -75,21 +75,26 @@ export async function cli() {
     process.exit(1);
   }
 
-  // A tag é criada quando -t é passado OU quando há um ambiente (-p/-s/-d).
-  const shouldTag = tagFlag || !!environment;
+  // A tag é criada SOMENTE quando -t é passado.
+  // -p/-s/-d apenas definem o ambiente (identificador da versão e "v" na tag).
+  const shouldTag = tagFlag;
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });
 
-  // Uma única chamada à IA gera a mensagem, o título e o subtítulo da tag.
-  const diff = Message.diffCommit();
-  const ai = await fetchCommitAndTag(description, diff);
-
-  const message = new Message(ai.message);
-
+  // Verifica que há algo staged ANTES de gastar uma chamada à IA.
   verifyStatus();
 
   const files = listFiles();
   console.log(green('Arquivos que serão comitados:'), files.join(', '));
+
+  // Uma única chamada à IA gera a mensagem e, só se houver tag, o título/subtítulo.
+  const diff = Message.diffCommit();
+  const ai = await fetchCommitAndTag(description, diff, {
+    includeTag: shouldTag,
+  });
+
+  // Respeita o prefixo digitado pelo usuário (a IA pode tê-lo trocado).
+  const message = new Message(enforcePrefix(ai.message, description));
 
   const currentVersion = getCurrentTag();
 
@@ -118,6 +123,7 @@ export async function cli() {
       environment,
       bigger,
       currentVersion,
+      shouldTag,
     ));
 
     // 2) Edita título e subtítulo da tag (já gerados na chamada única acima).
@@ -126,18 +132,17 @@ export async function cli() {
       tagSubtitle = (await askInput('Subtítulo da tag', ai.tagSubtitle)).trim();
     }
 
-    // 3) Resumo de todas as informações.
+    // 3) Resumo com o que é derivado (o enquirer já ecoou mensagem/título/subtítulo).
     console.log(green('\n─────── Resumo ───────'));
-    console.log(green('Mensagem: '), finalMessage.toString());
     console.log(green('Arquivos: '), files.join(', '));
     if (newVersion) {
       console.log(green('Versão:   '), `${currentVersion} → ${newVersion}`);
     }
+    if (environment && newVersion) {
+      console.log(green('Ambiente: '), environment.name);
+    }
     if (shouldTag && tagName) {
-      console.log(green('Ambiente: '), environment?.name ?? '—');
       console.log(green('Tag:      '), tagName);
-      console.log(green('Título:   '), tagTitle);
-      console.log(green('Subtítulo:'), tagSubtitle);
     }
 
     // 4) Confirmação final de tudo.
@@ -158,21 +163,21 @@ export async function cli() {
     updatePackageVersion(newVersion, currentDirectory);
   }
 
-  execSync(finalMessage.toCommit(), { cwd: currentDirectory });
+  // Array de argumentos (sem shell): $, crase e aspas na mensagem ficam literais.
+  execFileSync('git', finalMessage.toCommitArgs(), { cwd: currentDirectory });
   execSync(`git push`, { cwd: currentDirectory });
 
   if (shouldTag && tagName) {
-    // Aspas digitadas quebrariam o comando no shell — removidas por segurança.
-    const safeTitle = (tagTitle || finalMessage.toString()).replace(/"/g, '');
-    const safeSubtitle = tagSubtitle.replace(/"/g, '');
+    const title = tagTitle || finalMessage.toString();
 
     // -f permite reaproveitar o mesmo nome de tag em staging/dev.
-    const tagCmd = safeSubtitle
-      ? `git tag -f -a ${tagName} -m "${safeTitle}" -m "${safeSubtitle}"`
-      : `git tag -f -a ${tagName} -m "${safeTitle}"`;
+    const tagArgs = ['tag', '-f', '-a', tagName, '-m', title];
+    if (tagSubtitle) tagArgs.push('-m', tagSubtitle);
 
-    execSync(tagCmd, { cwd: currentDirectory });
-    execSync(`git push origin ${tagName} --force`, { cwd: currentDirectory });
+    execFileSync('git', tagArgs, { cwd: currentDirectory });
+    execFileSync('git', ['push', 'origin', tagName, '--force'], {
+      cwd: currentDirectory,
+    });
   }
 
   console.log(green('Commit realizado com sucesso!'));
@@ -215,12 +220,13 @@ function computeVersion(
   environment: Environment | undefined,
   bigger: boolean,
   currentVersion: string,
+  shouldTag: boolean,
 ) {
   let versionType = bigger ? 'major' : handleType(message.getType());
 
-  // Dentro de um ambiente, garante ao menos um patch para gerar a tag,
-  // mesmo em tipos que normalmente não versionam (chore, docs, etc.).
-  if (environment && !versionType) {
+  // Só força um patch quando realmente vai gerar tag (-t) num ambiente —
+  // assim a tag tem uma versão. Sem tag, um chore/docs continua sem versionar.
+  if (shouldTag && environment && !versionType) {
     versionType = 'patch';
   }
 
@@ -335,6 +341,31 @@ function pull() {
 
 function showVersion() {
   console.log('Versão atual:', pk.version);
+}
+
+/** Detecta um prefixo de commit no início da string (com escopo opcional). */
+const TYPE_RE = /^(feat|fix|docs|refactor|test|chore)(\([^)]*\))?:/;
+
+/**
+ * Impõe o prefixo digitado pelo usuário sobre a mensagem gerada pela IA.
+ * Se o usuário não informou prefixo, mantém a mensagem da IA como está.
+ */
+function enforcePrefix(aiMessage: string, userComment: string): string {
+  const userType = userComment.trim().match(TYPE_RE)?.[1];
+  if (!userType) return aiMessage;
+
+  const msg = aiMessage.trim();
+  const aiMatch = msg.match(TYPE_RE);
+
+  // IA não pôs prefixo reconhecível: prepende o do usuário.
+  if (!aiMatch) return `${userType}: ${msg}`;
+
+  // IA usou o mesmo prefixo: nada a fazer.
+  if (aiMatch[1] === userType) return aiMessage;
+
+  // IA trocou o prefixo: substitui pelo do usuário, preservando o escopo.
+  const scope = aiMatch[2] ?? '';
+  return msg.replace(TYPE_RE, `${userType}${scope}:`);
 }
 
 /**

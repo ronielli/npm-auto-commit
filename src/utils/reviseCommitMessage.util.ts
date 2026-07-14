@@ -14,12 +14,16 @@ export async function fetchCommitAndTag(
   commitMessage: string,
   diff = '',
   opts?: {
+    includeTag?: boolean;
     apiKey?: string;
     model?: string;
     endpoint?: string;
     timeoutMs?: number;
   },
 ): Promise<CommitAndTag> {
+  // Só pede título/subtítulo da tag quando realmente vai haver tag (-t/-p/-s/-d).
+  const includeTag = opts?.includeTag ?? true;
+
   const fallback: CommitAndTag = {
     message: commitMessage,
     tagTitle: commitMessage || 'Release',
@@ -60,15 +64,26 @@ export async function fetchCommitAndTag(
         messages: [
           {
             role: 'system',
-            content:
-              'Você gera, em português, uma mensagem de commit e a anotação ' +
-              'de uma tag de release, com base num diff e num comentário de ' +
-              'contexto. Responda APENAS um objeto JSON com as chaves: ' +
-              '"message" (mensagem de commit curta, imperativa, com prefixo ' +
-              'feat:/fix:/chore:/etc. no início, sem aspas e sem hífen), ' +
-              '"tagTitle" (título curto, headline da release) e ' +
-              '"tagSubtitle" (UMA frase curta resumindo as mudanças). ' +
-              'Não use aspas internas, markdown nem texto fora do JSON.',
+            content: includeTag
+              ? 'Você gera, em português, uma mensagem de commit e a anotação ' +
+                'de uma tag de release, com base num diff e num comentário de ' +
+                'contexto. Responda APENAS um objeto JSON com as chaves: ' +
+                '"message" (mensagem de commit curta, imperativa, com prefixo ' +
+                'feat:/fix:/chore:/etc. no início, sem aspas e sem hífen), ' +
+                '"tagTitle" (título curto, headline da release) e ' +
+                '"tagSubtitle" (UMA frase curta resumindo as mudanças). ' +
+                'IMPORTANTE: se o comentário já começar com um prefixo ' +
+                '(feat:/fix:/chore:/docs:/refactor:/test:), PRESERVE exatamente ' +
+                'esse prefixo; só escolha um quando o comentário não tiver. ' +
+                'Não use aspas internas, markdown nem texto fora do JSON.'
+              : 'Você gera, em português, uma mensagem de commit com base num ' +
+                'diff e num comentário de contexto. Responda APENAS um objeto ' +
+                'JSON com a chave "message" (mensagem de commit curta, ' +
+                'imperativa, com prefixo feat:/fix:/chore:/etc. no início, ' +
+                'sem aspas e sem hífen). IMPORTANTE: se o comentário já começar ' +
+                'com um prefixo (feat:/fix:/chore:/docs:/refactor:/test:), ' +
+                'PRESERVE exatamente esse prefixo; só escolha um quando o ' +
+                'comentário não tiver. Sem markdown nem texto fora do JSON.',
           },
           {
             role: 'user',

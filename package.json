@@ -1,6 +1,6 @@
 {
   "name": "npm-auto-commit",
-  "version": "1.7.0",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/cli.js",
   "bin": {
@@ -21,10 +21,10 @@
     "deploy": "npm run build && npm publish"
   },
   "keywords": [],
-  "author": "",
+  "author": "Ronielli Oliveira de Jesus <ronielli.jesus@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.2.3",
+    "@types/node": "^26.1.1",
     "@types/shelljs": "^0.8.12",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
     "@typescript-eslint/parser": "^5.59.6",

@@ -94,20 +94,25 @@ class Mensagem {
     }`;
   }
 
-  toCommit() {
+  /**
+   * Argumentos do `git commit` como array (sem shell), evitando que
+   * caracteres como $, crase ou aspas na mensagem sejam interpretados.
+   */
+  toCommitArgs(): string[] {
     const [title, ...rest] = this.description.split('-');
 
-    const mensagem = `git commit -m "${this.type}${
+    const subject = `${this.type}${
       this.scope ? `(${this.scope})` : ''
-    }: ${title.trim()}"${
-      rest.length === 0
-        ? ''
-        : ` -m "${rest
-            .map((item) => `- ${item.trim()}`)
-            .reduce((acc, item) => `${acc}\n${item}`)}"`
-    }`;
+    }: ${title.trim()}`;
 
-    return mensagem;
+    const args = ['commit', '-m', subject];
+
+    if (rest.length > 0) {
+      const body = rest.map((item) => `- ${item.trim()}`).join('\n');
+      args.push('-m', body);
+    }
+
+    return args;
   }
 
   // diff commit git diff --cached
