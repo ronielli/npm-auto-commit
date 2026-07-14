@@ -131,6 +131,93 @@ export async function fetchCommitMessage(
   }
 }
 
+/**
+ * Gera título e subtítulo para a anotação da tag (dois -m) via IA.
+ * Em caso de erro/timeout/sem chave, retorna um fallback razoável.
+ */
+export async function fetchTagMessage(
+  diff = '',
+  context = '',
+  opts?: {
+    apiKey?: string;
+    model?: string;
+    endpoint?: string;
+    timeoutMs?: number;
+  },
+): Promise<{ title: string; subtitle: string }> {
+  const fallback = {
+    title: context || 'Release',
+    subtitle: 'Atualização de versão',
+  };
+
+  const OPENAI_API_KEY = opts?.apiKey ?? process.env.OPENAI_API_KEY;
+  const MODEL = opts?.model ?? 'gpt-5-mini';
+  const ENDPOINT =
+    opts?.endpoint ?? 'https://api.openai.com/v1/chat/completions';
+  const TIMEOUT_MS = Math.max(1000, opts?.timeoutMs ?? 30_000);
+
+  if (!OPENAI_API_KEY) return fallback;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const response = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você gera anotações de tag de release em português. ' +
+              'Com base no diff e no contexto, responda em EXATAMENTE duas linhas: ' +
+              'a primeira é um título curto (headline da release), ' +
+              'a segunda é um subtítulo com um resumo em uma frase. ' +
+              'Não use aspas, markdown ou explicações.',
+          },
+          {
+            role: 'user',
+            content: `diff:\n${diff.slice(0, 100_000)}\ncontexto:\n${context}`,
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) return fallback;
+
+    const data = await response.json();
+    const content: string | undefined =
+      data?.choices?.[0]?.message?.content?.trim();
+
+    if (!content) return fallback;
+
+    const lines = content
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    // Aspas quebram o comando git no shell — removidas por segurança.
+    const title = (lines[0] ?? fallback.title).replace(/"/g, '');
+    const subtitle = (lines.slice(1).join(' ') || fallback.subtitle).replace(
+      /"/g,
+      '',
+    );
+
+    return { title, subtitle };
+  } catch {
+    clearTimeout(timeout);
+    return fallback;
+  }
+}
+
 /* ===========================
  * Utilitários de erro/log
  * ===========================

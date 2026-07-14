@@ -5,7 +5,10 @@ import { inc } from 'semver';
 
 import pk from '../package.json';
 
-import { fetchCommitMessage } from './utils/reviseCommitMessage.util';
+import {
+  fetchCommitMessage,
+  fetchTagMessage,
+} from './utils/reviseCommitMessage.util';
 import Message from './utils/message.util';
 import handleType from './utils/handleType.util';
 import updatePackageVersion from './utils/updatePackageVersion.util';
@@ -79,10 +82,10 @@ export async function cli() {
   const shouldTag = tagFlag || !!environment;
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });
-  const messageApi = await fetchCommitMessage(
-    description,
-    Message.diffCommit(),
-  );
+
+  // Captura o diff staged uma vez para reusar no commit e na tag.
+  const diff = Message.diffCommit();
+  const messageApi = await fetchCommitMessage(description, diff);
 
   const message = new Message(messageApi);
 
@@ -142,17 +145,22 @@ export async function cli() {
       updatePackageVersion(newVersion, currentDirectory);
     }
 
-    execSync(finalMessage.toCommit(), { cwd: currentDirectory });
-    execSync(`git push`, { cwd: currentDirectory });
+    execLogged(finalMessage.toCommit());
+    execLogged(`git push`);
 
     if (shouldTag && tagName) {
+      // Gera título e subtítulo da tag via IA (dois -m).
+      const { title, subtitle } = await fetchTagMessage(
+        diff,
+        finalMessage.toString(),
+      );
+
+      console.log(green('Título da tag:'), title);
+      console.log(green('Subtítulo da tag:'), subtitle);
+
       // -f permite reaproveitar o mesmo nome de tag em staging/dev.
-      execSync(`git tag -f -a ${tagName} -m "${finalMessage.toString()}"`, {
-        cwd: currentDirectory,
-      });
-      execSync(`git push origin ${tagName} --force`, {
-        cwd: currentDirectory,
-      });
+      execLogged(`git tag -f -a ${tagName} -m "${title}" -m "${subtitle}"`);
+      execLogged(`git push origin ${tagName} --force`);
     }
 
     console.log(green('Commit realizado com sucesso!'));
@@ -292,6 +300,14 @@ function pull() {
 
 function showVersion() {
   console.log('Versão atual:', pk.version);
+}
+
+/**
+ * Executa um comando exibindo-o antes, para o usuário entender o que roda.
+ */
+function execLogged(command: string) {
+  console.log(yellow('$'), command);
+  return execSync(command, { cwd: currentDirectory });
 }
 
 /**
