@@ -1,114 +1,133 @@
 # NPM Auto Commit
 
-O NPM Auto Commit é uma ferramenta de linha de comando que facilita o processo de commit automático de alterações em um repositório git. Ele verifica se o Git está instalado, se o usuário do Git está configurado corretamente e se um repositório Git foi iniciado. Além disso, ele permite adicionar automaticamente arquivos modificados ou realizar o commit manualmente.
+O **NPM Auto Commit** é uma ferramenta de linha de comando que agiliza o processo de commit em um repositório Git. Ele valida o ambiente (Git instalado, usuário configurado e repositório inicializado), gera a mensagem de commit com **IA**, cuida do **versionamento semântico** automaticamente e, opcionalmente, cria **tags** por ambiente.
+
+Todo o fluxo é **interativo**: você revisa e edita a mensagem (e a anotação da tag) antes de confirmar.
 
 ## Requisitos
 
-- Git instalado
+- **Git** instalado.
+- **Node.js**.
+- (Opcional) **`OPENAI_API_KEY`** — para a geração da mensagem por IA. Sem ela, a ferramenta continua funcionando usando a descrição que você digitar como mensagem.
 
 ## Instalação
 
-Para usar o NPM Auto Commit, siga as etapas abaixo:
+```shell
+yarn global add npm-auto-commit
+# ou
+npm install -g npm-auto-commit
+# ou
+npx npm-auto-commit
+```
 
-1.  Faça o clone deste repositório em sua máquina.
-2.  Navegue até o diretório raiz do projeto.
-3.  Execute o seguinte comando para instalar as dependências:
+## Configuração da IA
 
-    ```shell
-    yarn global add npm-auto-commit
-    ```
+Defina a variável de ambiente com sua chave da OpenAI:
 
-    ou
+```shell
+export OPENAI_API_KEY="sua-chave-aqui"
+```
 
-    ```shell
-    npm install npm-auto-commit -g
-    ```
-
-    ou
-
-    ```shell
-    npx npm-auto-commit
-    ```
+Numa **única** chamada, a IA gera a mensagem de commit e — quando há tag — o título e o subtítulo dela. Se a chave não estiver definida (ou a chamada falhar/expirar), a ferramenta usa um fallback e não trava.
 
 ## Utilização
 
-Para usar o NPM Auto Commit, execute o seguinte comando:
+```shell
+yarn commit -a "<tipo>: sua descrição - <detalhe opcional>"
+```
+
+Exemplo:
 
 ```shell
-yarn commit -a "<tipo>:sua descrição de commit - <detalhe>"
+yarn commit -a "feat: adicionar autenticação"
 ```
 
-Substitua `"sua descrição de commit"` pela descrição real do seu commit.
+## Opções (flags)
 
-## Opções
+As flags de uma letra podem ser **combinadas** (ex.: `-atp`).
 
-O NPM Auto Commit também oferece algumas opções adicionais:
+| Flag | Efeito |
+|------|--------|
+| `-a`, `-add` | Executa `git add .` antes do commit. |
+| `-b` | Incrementa a versão **maior** (major), em vez de usar o tipo do commit. |
+| `-t` | **Cria uma tag** com a nova versão. Sem `-t`, nenhuma tag é criada. |
+| `-p` | Ambiente **production** (versão limpa). |
+| `-s` | Ambiente **staging** (sufixo `-alpha`). |
+| `-d` | Ambiente **development** (sufixo `-dev`). |
+| `-v`, `--version` | Mostra a versão da própria ferramenta. |
 
-- `-add` ou `-a`: Adiciona automaticamente todos os arquivos modificados antes de fazer o commit.
-- `-b`: Incrementa a versão maior (major) em vez de usar o tipo de commit para determinar o incremento da versão.
+> `-p`, `-s` e `-d` são **mutuamente exclusivos** — passar mais de um dá erro.
 
-## Tipos de Commit
+## Tipos de commit e versionamento
 
-O NPM Auto Commit reconhece os seguintes tipos de commit:
+O tipo (prefixo) da mensagem define o incremento da versão:
 
-- **feat**: Para adição de uma nova funcionalidade. Incrementa a versão menor (minor).
-- **fix**: Para correção de bugs. Incrementa a versão de correção (patch).
-- **chore**: Para tarefas de manutenção ou ajustes internos. Não requer versionamento.
-- **refactor**: Para refatoração de código existente. Não requer versionamento.
-- **test**: Para adição ou modificação de testes. Não requer versionamento.
-- **docs**: Para atualização ou adição de documentação. Não requer versionamento.
+| Tipo | Incremento |
+|------|------------|
+| **feat** | minor (`1.2.0` → `1.3.0`) |
+| **fix** | patch (`1.2.0` → `1.2.1`) |
+| **chore**, **refactor**, **test**, **docs** | nenhum |
 
-Quando um commit é do tipo `feat` (adiciona uma nova funcionalidade) ou `fix` (corrige um bug), a versão do projeto é incrementada automaticamente. Nos demais tipos de commit, o versionamento não é realizado.
+- O prefixo que **você digitar é respeitado** — a IA não troca o tipo que você escolheu (ela só escolhe um quando você não informa).
+- Com `-b`, o incremento é sempre **major**.
+- A nova versão é gravada de forma **limpa** (sem `v`) no `package.json` e/ou no `pyproject.toml`.
 
-Certifique-se de fornecer a descrição correta do commit, seguindo o padrão:
+## Ambientes e tags
 
-```
-<tipo>: Descrição do commit
-```
+Os ambientes definem o **sabor** da versão/tag. Eles **só criam tag** quando combinados com `-t`.
 
-Por exemplo:
+| Flag | Ambiente | Versão | Tag (com `-t`) |
+|------|----------|--------|----------------|
+| `-p` | production | `1.3.0` | `v1.3.0` |
+| `-s` | staging | `1.3.0-alpha` | `v1.3.0-alpha` |
+| `-d` | development | `1.3.0-dev` | `v1.3.0-dev` |
 
-```
-feat: Adicionar funcionalidade de autenticação
-```
+Regras importantes:
 
-A descrição do commit será utilizada para determinar o tipo de commit e realizar o versionamento, se aplicável.
+- A **tag sempre leva `v` na frente** quando há ambiente (`v1.3.0`, `v1.3.0-alpha`).
+- Com `-t` + ambiente, garante-se ao menos um **patch** para a tag ter uma versão — mesmo num `chore`.
+- **Sem `-t`**, um `chore`/`docs` não versiona nem gera tag.
 
-## Detalhes do Commit
-
-Você pode adicionar detalhes ao commit, usando o caractere `-` (hífen) após a descrição do commit.
-
-## Exemplo
-
-Aqui está um exemplo de uso do NPM Auto Commit:
+Exemplos:
 
 ```shell
-yarn commit -a "feat: Adicionar funcionalidade de autenticação -foi adicionado um token JWT para autenticação"
+yarn commit -atp "feat: novo login"   # commit + tag v1.3.0 (production)
+yarn commit -ats "fix: ajuste"        # commit + tag v1.2.1-alpha (staging)
+yarn commit -ap  "chore: limpeza"     # apenas commit, sem tag e sem bump
 ```
 
-## Fluxo de Execução
+## Fluxo interativo
 
-O NPM Auto Commit segue o seguinte fluxo de execução:
+Ao rodar, a ferramenta abre campos **editáveis** (pré-preenchidos):
 
-1.  Verifica se o Git está instalado. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-2.  Verifica se o usuário do Git está configurado corretamente. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-3.  Verifica se um repositório Git foi iniciado. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-4.  Executa `git pull` para atualizar o repositório local.
-5.  Verifica se foram passados argumentos na linha de comando. Caso contrário, exibe uma mensagem de aviso e encerra o programa.
-6.  Extrai a descrição do commit dos argumentos passados.
-7.  Verifica se a opção `-add` foi passada. Caso positivo, executa `git add .` para adicionar todos os arquivos modificados ao commit.
-8.  Verifica se há arquivos modificados para commitar. Caso não haja, exibe uma mensagem informando que não há nada para commitar e encerra o programa.
-9.  Cria uma mensagem de commit com base na descrição fornecida.
-10. Obtém a versão atual do projeto com base nas tags do Git.
-11. Determina o tipo de versão com base no tipo de commit ou na opção `-b`.
-12. Incrementa a versão atual com base no tipo de versão.
-13. Verifica se o tipo de commit não requer versionamento. Caso seja verdadeiro, exibe uma mensagem de aviso e encerra o programa.
-14. Exibe a mensagem de commit, a versão atual e a nova versão.
-15. Pergunta ao usuário se deseja continuar.
-16. Caso o usuário confirme, atualiza a versão no arquivo `package.json` ou em um arquivo separado, adiciona os arquivos alterados ao commit, realiza o commit com a mensagem fornecida e cria uma nova tag com a nova versão.
-17. Executa `git push` para enviar as alterações para o repositório remoto.
-18. Executa `git push --tags` para enviar as tags para o repositório remoto.
-19. Exibe uma mensagem informando que o commit foi realizado com sucesso.
+1. **Mensagem de commit** — revise/edite e tecle Enter.
+2. **Título e subtítulo da tag** — só aparecem quando há tag (`-t`); também editáveis.
+3. **Resumo** — mostra arquivos, versão, ambiente e tag.
+4. **Confirmação** — `s/n` para confirmar tudo.
+
+**Cancelar** em qualquer etapa: deixe o campo vazio, responda "não" ou tecle **Ctrl+C** (o `git add` é desfeito com `git reset`).
+
+## Detalhes do commit
+
+Adicione um corpo ao commit usando o caractere `-` (hífen) após a descrição. O texto após o hífen vira um segundo parágrafo (`-m`) do commit:
+
+```shell
+yarn commit -a "feat: adicionar autenticação - implementa token JWT e refresh"
+```
+
+## Fluxo de execução
+
+1. Verifica Git instalado, usuário configurado e repositório inicializado.
+2. Executa `git pull`.
+3. Se `-a`/`-add`, executa `git add .`.
+4. **Verifica se há algo staged** — se não houver, encerra (antes de qualquer chamada à IA).
+5. Faz **uma** chamada à IA gerando a mensagem (e, se houver tag, título/subtítulo).
+6. Impõe o prefixo que você digitou sobre a mensagem da IA.
+7. Abre os campos editáveis e o resumo; pede confirmação.
+8. Ao confirmar: grava a versão no manifesto, faz o commit e `git push`.
+9. Se `-t`: cria a tag (`git tag -f -a`) e envia com `git push origin <tag> --force`.
+
+> Os comandos `git` que usam a mensagem são executados **sem shell** (array de argumentos), então caracteres como `$`, crase ou aspas ficam literais na mensagem.
 
 ## Licença
 
