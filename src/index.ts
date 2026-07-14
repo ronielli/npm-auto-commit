@@ -1,14 +1,11 @@
-import { createInterface } from 'readline';
 import { execSync } from 'child_process';
 
 import { inc } from 'semver';
+import Enquirer from 'enquirer';
 
 import pk from '../package.json';
 
-import {
-  fetchCommitMessage,
-  fetchTagMessage,
-} from './utils/reviseCommitMessage.util';
+import { fetchCommitAndTag } from './utils/reviseCommitMessage.util';
 import Message from './utils/message.util';
 import handleType from './utils/handleType.util';
 import updatePackageVersion from './utils/updatePackageVersion.util';
@@ -83,11 +80,11 @@ export async function cli() {
 
   if (add) execSync(`git add .`, { cwd: currentDirectory });
 
-  // Captura o diff staged uma vez para reusar no commit e na tag.
+  // Uma única chamada à IA gera a mensagem, o título e o subtítulo da tag.
   const diff = Message.diffCommit();
-  const messageApi = await fetchCommitMessage(description, diff);
+  const ai = await fetchCommitAndTag(description, diff);
 
-  const message = new Message(messageApi);
+  const message = new Message(ai.message);
 
   verifyStatus();
 
@@ -96,79 +93,117 @@ export async function cli() {
 
   const currentVersion = getCurrentTag();
 
-  console.log(
-    green('Revise a mensagem abaixo. Edite se quiser e tecle Enter para confirmar.'),
-  );
-  console.log(yellow('(apague tudo e tecle Enter, ou Ctrl+C, para cancelar)'));
+  let finalMessage!: Message;
+  let newVersion: string | null = null;
+  let tagName: string | null = null;
+  let tagTitle = '';
+  let tagSubtitle = '';
 
-  const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+  try {
+    // 1) Edita a mensagem de commit (pré-preenchida com a sugestão da IA).
+    const editedMessage = (
+      await askInput('Mensagem de commit', message.toString())
+    ).trim();
 
-  // Ctrl+C durante a edição cancela e desfaz o stage.
-  rl.on('SIGINT', () => {
-    execSync(`git reset`, { cwd: currentDirectory });
-    console.log(yellow('\nCommit cancelado!'));
-    rl.close();
-    process.exit(0);
-  });
-
-  rl.question('› ', async (answer) => {
-    const edited = answer.trim();
-
-    if (edited.length === 0) {
-      execSync(`git reset`, { cwd: currentDirectory });
-      console.log(yellow('Commit cancelado!'));
-      rl.close();
+    if (editedMessage.length === 0) {
+      cancel();
       return;
     }
 
-    // Reconstrói a mensagem a partir do texto (possivelmente) editado.
-    // O construtor valida o prefixo; se estiver inválido, encerra com aviso.
-    const finalMessage = new Message(edited);
+    // O construtor valida o prefixo; se inválido, encerra com aviso.
+    finalMessage = new Message(editedMessage);
 
-    const { newVersion, tagName } = computeVersion(
+    ({ newVersion, tagName } = computeVersion(
       finalMessage,
       environment,
       bigger,
       currentVersion,
-    );
+    ));
 
-    if (newVersion) {
-      console.log(green('Versão atual:'), currentVersion);
-      console.log(green('Nova versão:'), newVersion);
-      if (environment) {
-        console.log(green('Ambiente:'), environment.name);
-        console.log(green('Tag:'), tagName);
-      }
-      updatePackageVersion(newVersion, currentDirectory);
-    }
-
-    execLogged(finalMessage.toCommit());
-    execLogged(`git push`);
-
+    // 2) Edita título e subtítulo da tag (já gerados na chamada única acima).
     if (shouldTag && tagName) {
-      // Gera título e subtítulo da tag via IA (dois -m).
-      const { title, subtitle } = await fetchTagMessage(
-        diff,
-        finalMessage.toString(),
-      );
-
-      console.log(green('Título da tag:'), title);
-      console.log(green('Subtítulo da tag:'), subtitle);
-
-      // -f permite reaproveitar o mesmo nome de tag em staging/dev.
-      execLogged(`git tag -f -a ${tagName} -m "${title}" -m "${subtitle}"`);
-      execLogged(`git push origin ${tagName} --force`);
+      tagTitle = (await askInput('Título da tag', ai.tagTitle)).trim();
+      tagSubtitle = (await askInput('Subtítulo da tag', ai.tagSubtitle)).trim();
     }
 
-    console.log(green('Commit realizado com sucesso!'));
-    rl.close();
-  });
+    // 3) Resumo de todas as informações.
+    console.log(green('\n─────── Resumo ───────'));
+    console.log(green('Mensagem: '), finalMessage.toString());
+    console.log(green('Arquivos: '), files.join(', '));
+    if (newVersion) {
+      console.log(green('Versão:   '), `${currentVersion} → ${newVersion}`);
+    }
+    if (shouldTag && tagName) {
+      console.log(green('Ambiente: '), environment?.name ?? '—');
+      console.log(green('Tag:      '), tagName);
+      console.log(green('Título:   '), tagTitle);
+      console.log(green('Subtítulo:'), tagSubtitle);
+    }
 
-  // Pré-preenche o campo com a mensagem gerada, deixando-a editável.
-  rl.write(message.toString());
+    // 4) Confirmação final de tudo.
+    const confirmed = await askConfirm('Confirmar todas as informações?');
+
+    if (!confirmed) {
+      cancel();
+      return;
+    }
+  } catch {
+    // Ctrl+C ou cancelamento do prompt cai aqui.
+    cancel();
+    return;
+  }
+
+  // Execução fora do try, para não mascarar erros reais do git como cancelamento.
+  if (newVersion) {
+    updatePackageVersion(newVersion, currentDirectory);
+  }
+
+  execSync(finalMessage.toCommit(), { cwd: currentDirectory });
+  execSync(`git push`, { cwd: currentDirectory });
+
+  if (shouldTag && tagName) {
+    // Aspas digitadas quebrariam o comando no shell — removidas por segurança.
+    const safeTitle = (tagTitle || finalMessage.toString()).replace(/"/g, '');
+    const safeSubtitle = tagSubtitle.replace(/"/g, '');
+
+    // -f permite reaproveitar o mesmo nome de tag em staging/dev.
+    const tagCmd = safeSubtitle
+      ? `git tag -f -a ${tagName} -m "${safeTitle}" -m "${safeSubtitle}"`
+      : `git tag -f -a ${tagName} -m "${safeTitle}"`;
+
+    execSync(tagCmd, { cwd: currentDirectory });
+    execSync(`git push origin ${tagName} --force`, { cwd: currentDirectory });
+  }
+
+  console.log(green('Commit realizado com sucesso!'));
+}
+
+/** Desfaz o stage, sinalizando cancelamento. */
+function cancel() {
+  execSync(`git reset`, { cwd: currentDirectory });
+  console.log(yellow('\nCommit cancelado!'));
+}
+
+/** Campo de texto editável (estilo Claude Code), pré-preenchido com `initial`. */
+async function askInput(message: string, initial: string): Promise<string> {
+  const { value } = await Enquirer.prompt<{ value: string }>({
+    type: 'input',
+    name: 'value',
+    message,
+    initial,
+  });
+  return value ?? '';
+}
+
+/** Confirmação sim/não (padrão: sim). */
+async function askConfirm(message: string): Promise<boolean> {
+  const { value } = await Enquirer.prompt<{ value: boolean }>({
+    type: 'confirm',
+    name: 'value',
+    message,
+    initial: true,
+  });
+  return value;
 }
 
 /**
@@ -300,14 +335,6 @@ function pull() {
 
 function showVersion() {
   console.log('Versão atual:', pk.version);
-}
-
-/**
- * Executa um comando exibindo-o antes, para o usuário entender o que roda.
- */
-function execLogged(command: string) {
-  console.log(yellow('$'), command);
-  return execSync(command, { cwd: currentDirectory });
 }
 
 /**

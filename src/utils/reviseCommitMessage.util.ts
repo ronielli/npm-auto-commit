@@ -1,8 +1,16 @@
+/** Resultado da geração combinada: mensagem de commit + anotação da tag. */
+export type CommitAndTag = {
+  message: string;
+  tagTitle: string;
+  tagSubtitle: string;
+};
+
 /**
- * Gera (ou revisa) a mensagem de commit via API da OpenAI.
- * Em caso de erro/timeout, retorna `commitMessage` sem alterar.
+ * Gera, numa ÚNICA chamada à IA, a mensagem de commit e o título/subtítulo
+ * da tag (JSON estruturado). Economiza uma requisição e metade dos tokens.
+ * Em caso de erro/timeout/sem chave, retorna um fallback razoável.
  */
-export async function fetchCommitMessage(
+export async function fetchCommitAndTag(
   commitMessage: string,
   diff = '',
   opts?: {
@@ -11,7 +19,13 @@ export async function fetchCommitMessage(
     endpoint?: string;
     timeoutMs?: number;
   },
-): Promise<string> {
+): Promise<CommitAndTag> {
+  const fallback: CommitAndTag = {
+    message: commitMessage,
+    tagTitle: commitMessage || 'Release',
+    tagSubtitle: 'Atualização de versão',
+  };
+
   const OPENAI_API_KEY = opts?.apiKey ?? process.env.OPENAI_API_KEY;
   const MODEL = opts?.model ?? 'gpt-5-mini';
   const ENDPOINT =
@@ -26,7 +40,7 @@ export async function fetchCommitMessage(
         hint: 'Defina OPENAI_API_KEY e tente novamente.',
       }),
     );
-    return commitMessage;
+    return fallback;
   }
 
   // Timeout controlado por AbortController
@@ -42,18 +56,19 @@ export async function fetchCommitMessage(
       },
       body: JSON.stringify({
         model: MODEL,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
             content:
-              'Você é um gerador de mensagens de commit.' +
-              'Com base em um diff e em um comentário de contexto,' +
-              'gere uma mensagem de commit em português, clara, curta e no estilo imperativo. ' +
-              'adicione o prefixo fix:, feat:, chore:, se necessário.' +
-              'preserve-o no início da mensagem. ' +
-              'Sua saída deve ser apenas a mensagem de commit — sem explicações, sem texto adicional.' +
-              'não use aspas no nome commit' +
-              'não colocar - no nome commit',
+              'Você gera, em português, uma mensagem de commit e a anotação ' +
+              'de uma tag de release, com base num diff e num comentário de ' +
+              'contexto. Responda APENAS um objeto JSON com as chaves: ' +
+              '"message" (mensagem de commit curta, imperativa, com prefixo ' +
+              'feat:/fix:/chore:/etc. no início, sem aspas e sem hífen), ' +
+              '"tagTitle" (título curto, headline da release) e ' +
+              '"tagSubtitle" (UMA frase curta resumindo as mudanças). ' +
+              'Não use aspas internas, markdown nem texto fora do JSON.',
           },
           {
             role: 'user',
@@ -82,7 +97,7 @@ export async function fetchCommitMessage(
           hint: 'Verifique o modelo, sua quota e a validade da OPENAI_API_KEY.',
         }),
       );
-      return commitMessage;
+      return fallback;
     }
 
     const data = await response.json();
@@ -99,13 +114,10 @@ export async function fetchCommitMessage(
           hint: 'Tente novamente; se persistir, ative logs em nível debug.',
         }),
       );
-      return commitMessage;
+      return fallback;
     }
 
-    // Log opcional para inspeção
-    // console.log('[openai.commit] →', content);
-
-    return content;
+    return parseCommitAndTag(content, fallback);
   } catch (err: unknown) {
     clearTimeout(timeout);
 
@@ -127,94 +139,32 @@ export async function fetchCommitMessage(
       );
     }
 
-    return commitMessage;
+    return fallback;
   }
 }
 
-/**
- * Gera título e subtítulo para a anotação da tag (dois -m) via IA.
- * Em caso de erro/timeout/sem chave, retorna um fallback razoável.
- */
-export async function fetchTagMessage(
-  diff = '',
-  context = '',
-  opts?: {
-    apiKey?: string;
-    model?: string;
-    endpoint?: string;
-    timeoutMs?: number;
-  },
-): Promise<{ title: string; subtitle: string }> {
-  const fallback = {
-    title: context || 'Release',
-    subtitle: 'Atualização de versão',
-  };
-
-  const OPENAI_API_KEY = opts?.apiKey ?? process.env.OPENAI_API_KEY;
-  const MODEL = opts?.model ?? 'gpt-5-mini';
-  const ENDPOINT =
-    opts?.endpoint ?? 'https://api.openai.com/v1/chat/completions';
-  const TIMEOUT_MS = Math.max(1000, opts?.timeoutMs ?? 30_000);
-
-  if (!OPENAI_API_KEY) return fallback;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-  try {
-    const response = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Você gera anotações de tag de release em português. ' +
-              'Com base no diff e no contexto, responda em EXATAMENTE duas linhas: ' +
-              'a primeira é um título curto (headline da release), ' +
-              'a segunda é um subtítulo com um resumo em uma frase. ' +
-              'Não use aspas, markdown ou explicações.',
-          },
-          {
-            role: 'user',
-            content: `diff:\n${diff.slice(0, 100_000)}\ncontexto:\n${context}`,
-          },
-        ],
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) return fallback;
-
-    const data = await response.json();
-    const content: string | undefined =
-      data?.choices?.[0]?.message?.content?.trim();
-
-    if (!content) return fallback;
-
-    const lines = content
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    // Aspas quebram o comando git no shell — removidas por segurança.
-    const title = (lines[0] ?? fallback.title).replace(/"/g, '');
-    const subtitle = (lines.slice(1).join(' ') || fallback.subtitle).replace(
+/** Faz o parse robusto do JSON retornado, com sanitização e fallback. */
+function parseCommitAndTag(
+  content: string,
+  fallback: CommitAndTag,
+): CommitAndTag {
+  // Aspas quebram o comando git no shell — removidas por segurança.
+  const clean = (value: unknown, fb: string) =>
+    (typeof value === 'string' && value.trim() ? value.trim() : fb).replace(
       /"/g,
       '',
     );
 
-    return { title, subtitle };
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    return {
+      message: clean(parsed.message, fallback.message),
+      tagTitle: clean(parsed.tagTitle, fallback.tagTitle),
+      tagSubtitle: clean(parsed.tagSubtitle, fallback.tagSubtitle),
+    };
   } catch {
-    clearTimeout(timeout);
-    return fallback;
+    // Sem JSON válido: usa o conteúdo bruto como mensagem de commit.
+    return { ...fallback, message: content.replace(/"/g, '') };
   }
 }
 
