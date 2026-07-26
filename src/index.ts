@@ -230,7 +230,13 @@ function computeVersion(
     versionType = 'patch';
   }
 
-  const base = inc(currentVersion, versionType as 'major' | 'minor' | 'patch');
+  // A versão atual pode chegar com identificador de ambiente (ex.: "0.4.0-dev")
+  // ou com sufixo do git describe (ex.: "0.4.0-dev-3-gabc123"). Se passarmos
+  // isso direto pro `inc`, o semver apenas remove o pré-lançamento sem avançar
+  // o número (0.4.0-dev + patch => 0.4.0). Incrementamos sempre a partir do
+  // núcleo numérico limpo (major.minor.patch).
+  const cleanVersion = currentVersion.split('-')[0];
+  const base = inc(cleanVersion, versionType as 'major' | 'minor' | 'patch');
 
   // Versão do manifesto: sempre limpa (com identificador, sem "v").
   const newVersion =
