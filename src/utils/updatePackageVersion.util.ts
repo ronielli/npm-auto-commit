@@ -1,4 +1,5 @@
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, readdirSync } from 'fs';
+import { join } from 'path';
 import { execSync } from 'child_process';
 
 function updatePackageJson(filePath: string, newVersion: string): void {
@@ -38,23 +39,48 @@ function updatePyproject(filePath: string, newVersion: string): void {
   writeFileSync(filePath, newLines.join('\n'));
 }
 
+// Manifestos suportados e como atualizar cada um.
+const MANIFESTS: { file: string; update: (p: string, v: string) => void }[] = [
+  { file: 'package.json', update: updatePackageJson },
+  { file: 'pyproject.toml', update: updatePyproject },
+];
+
+// Subpastas de monorepo onde os apps ficam (convenção do projeto).
+const WORKSPACE_DIRS = ['apps', 'packages'];
+
+// Retorna os diretórios a varrer: a raiz + cada subpasta imediata de apps/, packages/.
+function resolveTargetDirs(cwd: string): string[] {
+  const dirs = [cwd];
+
+  for (const workspace of WORKSPACE_DIRS) {
+    const workspacePath = join(cwd, workspace);
+    if (!existsSync(workspacePath)) continue;
+
+    for (const entry of readdirSync(workspacePath, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        dirs.push(join(workspacePath, entry.name));
+      }
+    }
+  }
+
+  return dirs;
+}
+
 function updatePackageVersion(
   newVersion: string,
   cwd: string = process.cwd(),
 ): boolean {
-  const manifests = [
-    { path: './package.json', update: updatePackageJson },
-    { path: './pyproject.toml', update: updatePyproject },
-  ];
-
   let touched = false;
 
-  for (const { path, update } of manifests) {
-    if (!existsSync(path)) continue;
+  for (const dir of resolveTargetDirs(cwd)) {
+    for (const { file, update } of MANIFESTS) {
+      const filePath = join(dir, file);
+      if (!existsSync(filePath)) continue;
 
-    update(path, newVersion);
-    execSync(`git add ${path}`, { cwd });
-    touched = true;
+      update(filePath, newVersion);
+      execSync(`git add "${filePath}"`, { cwd });
+      touched = true;
+    }
   }
 
   return touched;
