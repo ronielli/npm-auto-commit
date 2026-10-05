@@ -45,6 +45,35 @@ const MANIFESTS: { file: string; update: (p: string, v: string) => void }[] = [
   { file: 'pyproject.toml', update: updatePyproject },
 ];
 
+// Lockfiles que precisam ser ressincronizados após bumpar o pyproject.toml,
+// para o commit não sair com manifesto e lock em versões divergentes.
+const PY_LOCKFILES: { file: string; sync: string }[] = [
+  { file: 'uv.lock', sync: 'uv lock' },
+  { file: 'poetry.lock', sync: 'poetry lock --no-update' },
+];
+
+// Ressincroniza o lockfile Python da pasta (uv/poetry) e o adiciona ao stage.
+// Best-effort: se a ferramenta não estiver instalada ou falhar, apenas avisa —
+// não aborta o commit.
+function syncPythonLock(dir: string, cwd: string): void {
+  for (const { file, sync } of PY_LOCKFILES) {
+    const lockPath = join(dir, file);
+    if (!existsSync(lockPath)) continue;
+
+    try {
+      execSync(sync, { cwd: dir, stdio: 'ignore' });
+      execSync(`git add "${lockPath}"`, { cwd });
+    } catch {
+      console.warn(
+        `Aviso: falha ao rodar "${sync}" em ${dir}; ${file} não foi ressincronizado.`,
+      );
+    }
+
+    // Apenas um lockfile por projeto (uv OU poetry).
+    return;
+  }
+}
+
 // Subpastas de monorepo onde os apps ficam (convenção do projeto).
 const WORKSPACE_DIRS = ['apps', 'packages'];
 
@@ -73,6 +102,8 @@ function updatePackageVersion(
   let touched = false;
 
   for (const dir of resolveTargetDirs(cwd)) {
+    let pyprojectUpdated = false;
+
     for (const { file, update } of MANIFESTS) {
       const filePath = join(dir, file);
       if (!existsSync(filePath)) continue;
@@ -80,7 +111,14 @@ function updatePackageVersion(
       update(filePath, newVersion);
       execSync(`git add "${filePath}"`, { cwd });
       touched = true;
+
+      if (file === 'pyproject.toml') pyprojectUpdated = true;
     }
+
+    // Após bumpar o pyproject, o lock precisa refletir a nova versão no
+    // mesmo commit — senão o uv.lock fica para trás e gera um diff ruidoso
+    // na próxima vez que alguém rodar `uv lock`.
+    if (pyprojectUpdated) syncPythonLock(dir, cwd);
   }
 
   return touched;
